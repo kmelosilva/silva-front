@@ -1,29 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { loginThunk } from "../store/auth/authActions";
+import { registerThunk } from "../store/auth/authActions";
 import { clearError } from "../store/auth/authSlice";
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  // Lê estado diretamente da store
   const { loading, error } = useAppSelector((state) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const result = await dispatch(loginThunk({ email, password }));
+    const result = await dispatch(registerThunk({ name, email, password }));
 
-    // loginThunk.fulfilled = login OK → navega
-    if (loginThunk.fulfilled.match(result)) {
-      navigate("/missions");
+    if (registerThunk.fulfilled.match(result)) {
+      navigate("/");
     }
-    // loginThunk.rejected = erro → o slice já gravou state.auth.error
   };
 
   return (
@@ -33,7 +31,7 @@ export default function Login() {
         style={{ maxWidth: "400px" }}
         onSubmit={handleSubmit}
       >
-        <h3 className="mb-4 text-center">Login</h3>
+        <h3 className="mb-4 text-center">Criar conta</h3>
 
         {error && (
           <div
@@ -48,6 +46,21 @@ export default function Login() {
             />
           </div>
         )}
+
+        <div className="mb-3">
+          <label className="form-label">Nome</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Seu nome"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (error) dispatch(clearError());
+            }}
+            required
+          />
+        </div>
 
         <div className="mb-3">
           <label className="form-label">Email</label>
@@ -72,6 +85,7 @@ export default function Login() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
             required
           />
         </div>
@@ -84,17 +98,17 @@ export default function Login() {
           {loading ? (
             <>
               <span className="spinner-border spinner-border-sm me-2" />
-              Entrando...
+              Criando conta...
             </>
           ) : (
-            "Entrar"
+            "Registrar"
           )}
         </button>
 
         <p className="text-center mt-3 text-muted small">
-          Não tem conta?{" "}
-          <a href="/register" className="text-decoration-none">
-            Registrar
+          Já tem conta?{" "}
+          <a href="/" className="text-decoration-none">
+            Entrar
           </a>
         </p>
       </form>
