@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/index";
 
-import Login from "./pages/Login";
-import Missions from "./pages/Missions";
-import Register from "./pages/Register";
+import Login from "./pages/Login/index";
+import Missions from "./pages/Missions/index";
+import Register from "./pages/Register/index";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
