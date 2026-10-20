@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { getMissions } from "../../services/missionService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
-import { getCategoryConfig } from "../../config/categoryConfig";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
+import ModuleCard from "../../components/Missions/ModuleCard";
 import type { Mission } from "../../types/mission";
 import {
   GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
-  LogoutButton, Content, FilterButton, FiltersWrapper,
+  LogoutButton, Content, ModulesGrid, BackButton,
   MissionsWrapper, EmptyState, ErrorBox, LoadingState,
 } from "./styles";
 
@@ -27,7 +27,7 @@ export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeCategory, setActiveCategory] = useState("todas");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -60,10 +60,6 @@ export default function Missions() {
 
   const categories = Object.keys(grouped);
 
-  const filtered = activeCategory === "todas"
-    ? grouped
-    : { [activeCategory]: grouped[activeCategory] ?? [] };
-
   return (
     <>
       <GlobalMissions />
@@ -95,25 +91,6 @@ export default function Missions() {
             missionsCompleted={AGENT.missionsCompleted}
           />
 
-          {/* Filtros */}
-          <FiltersWrapper className="d-flex flex-wrap gap-2 mb-4">
-            {["todas", ...categories].map((cat) => {
-              const cfg = cat === "todas"
-                ? { color: "#6366f1", label: "Todas", emoji: "✦" }
-                : getCategoryConfig(cat);
-              return (
-                <FilterButton
-                  key={cat}
-                  $color={cfg.color}
-                  $active={activeCategory === cat}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cfg.emoji} {cat === "todas" ? "Todas" : getCategoryConfig(cat).label}
-                </FilterButton>
-              );
-            })}
-          </FiltersWrapper>
-
           {/* Estados */}
           {loading && (
             <LoadingState>
@@ -124,12 +101,33 @@ export default function Missions() {
 
           {error && <ErrorBox>⚠ {error}</ErrorBox>}
 
-          {/* Missões agrupadas */}
+          {/* Grid de módulos ou missões do módulo selecionado */}
           {!loading && !error && (
             <MissionsWrapper>
-              {Object.entries(filtered).map(([cat, items]) => (
-                <CategorySection key={cat} category={cat} missions={items} />
-              ))}
+              {selectedCategory === null ? (
+                <ModulesGrid>
+                  {categories.map((cat, i) => (
+                    <ModuleCard
+                      key={cat}
+                      category={cat}
+                      count={grouped[cat].length}
+                      index={i}
+                      onClick={() => setSelectedCategory(cat)}
+                    />
+                  ))}
+                </ModulesGrid>
+              ) : (
+                <>
+                  <BackButton onClick={() => setSelectedCategory(null)}>
+                    ← Voltar aos módulos
+                  </BackButton>
+                  <CategorySection
+                    category={selectedCategory}
+                    missions={grouped[selectedCategory] ?? []}
+                  />
+                </>
+              )}
+
               {missions.length === 0 && (
                 <EmptyState>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
