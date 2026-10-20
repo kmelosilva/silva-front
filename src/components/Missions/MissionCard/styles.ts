@@ -57,10 +57,18 @@ export const Title = styled.p`
   color: #e2e8f0;
   line-height: 1.4;
   min-height: 40px;
+  margin: 0 0 6px;
+`;
+
+export const Meta = styled.p`
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #94a3b8;
   margin: 0 0 14px;
 `;
 
-export const AcceptButton = styled.button<{ $color: string }>`
+export const OpenButton = styled.button<{ $color: string }>`
   width: 100%;
   padding: 9px 0;
   border-radius: 8px;

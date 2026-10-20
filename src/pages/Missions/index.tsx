@@ -5,6 +5,7 @@ import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
+import MissionDetail from "../../components/Missions/MissionDetail";
 import ModuleCard from "../../components/Missions/ModuleCard";
 import type { Category, Mission } from "../../types/mission";
 import {
@@ -49,6 +50,7 @@ export default function Missions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -73,6 +75,12 @@ export default function Missions() {
 
   const groups = useMemo(() => groupByCategory(missions), [missions]);
   const selectedGroup = groups.find((group) => group.category.key === selectedCategory);
+  const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug);
+
+  const closeModule = () => {
+    setSelectedSlug(null);
+    setSelectedCategory(null);
+  };
 
   return (
     <>
@@ -115,17 +123,25 @@ export default function Missions() {
 
           {error && <ErrorBox>⚠ {error}</ErrorBox>}
 
-          {/* Grid de módulos ou missões do módulo selecionado */}
+          {/* Módulos → missões do módulo → coordenadas da missão */}
           {!loading && !error && (
             <MissionsWrapper>
-              {selectedGroup ? (
+              {selectedMission ? (
                 <>
-                  <BackButton onClick={() => setSelectedCategory(null)}>
+                  <BackButton onClick={() => setSelectedSlug(null)}>
+                    ← Voltar às missões
+                  </BackButton>
+                  <MissionDetail mission={selectedMission} />
+                </>
+              ) : selectedGroup ? (
+                <>
+                  <BackButton onClick={closeModule}>
                     ← Voltar aos módulos
                   </BackButton>
                   <CategorySection
                     category={selectedGroup.category}
                     missions={selectedGroup.missions}
+                    onSelectMission={(mission) => setSelectedSlug(mission.slug)}
                   />
                 </>
               ) : (

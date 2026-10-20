@@ -6,9 +6,10 @@ import { Section, CategoryBar, CategoryLabel, CategoryCount, Grid } from "./styl
 interface CategorySectionProps {
   category: Category;
   missions: Mission[];
+  onSelectMission: (mission: Mission) => void;
 }
 
-export default function CategorySection({ category, missions }: CategorySectionProps) {
+export default function CategorySection({ category, missions, onSelectMission }: CategorySectionProps) {
   const visual = getCategoryVisual(category.key);
 
   return (
@@ -23,7 +24,7 @@ export default function CategorySection({ category, missions }: CategorySectionP
 
       <Grid>
         {missions.map((mission, i) => (
-          <MissionCard key={mission.id} mission={mission} index={i} />
+          <MissionCard key={mission.id} mission={mission} index={i} onSelect={onSelectMission} />
         ))}
       </Grid>
     </Section>
