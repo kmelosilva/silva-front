@@ -1,7 +1,29 @@
+// Contrato de GET /api/missions — espelha backend/app/Http/Resources/MissionResource.php.
+
+export interface Category {
+  key: string;
+  label: string;
+}
+
+export interface Coordinate {
+  slug: string;
+  position: number;
+  title: string;
+  content: string;
+  xp: number;
+}
+
 export interface Mission {
-    id: number;
-    title: string;
-    description?: string;
-    xp: number;
-    category: string;
-  }
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  category: Category;
+  coordinates_count: number;
+  xp_total: number;
+  coordinates: Coordinate[];
+}
+
+export interface MissionsResponse {
+  data: Mission[];
+}

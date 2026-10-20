@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMissions } from "../../services/missionService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
-import { getCategoryConfig } from "../../config/categoryConfig";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
-import type { Mission } from "../../types/mission";
+import MissionDetail from "../../components/Missions/MissionDetail";
+import ModuleCard from "../../components/Missions/ModuleCard";
+import type { Category, Mission } from "../../types/mission";
 import {
   GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
-  LogoutButton, Content, FilterButton, FiltersWrapper,
+  LogoutButton, Content, ModulesGrid, BackButton,
   MissionsWrapper, EmptyState, ErrorBox, LoadingState,
 } from "./styles";
 
@@ -23,11 +24,33 @@ const AGENT = {
   streak: 5,
 };
 
+interface MissionGroup {
+  category: Category;
+  missions: Mission[];
+}
+
+// Agrupa pela categoria que a API mandou, na ordem em que as missões chegam.
+function groupByCategory(missions: Mission[]): MissionGroup[] {
+  const groups = new Map<string, MissionGroup>();
+
+  for (const mission of missions) {
+    const group = groups.get(mission.category.key);
+    if (group) {
+      group.missions.push(mission);
+    } else {
+      groups.set(mission.category.key, { category: mission.category, missions: [mission] });
+    }
+  }
+
+  return [...groups.values()];
+}
+
 export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeCategory, setActiveCategory] = useState("todas");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -35,8 +58,7 @@ export default function Missions() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getMissions();
-        setMissions(data.data);
+        setMissions(await getMissions());
       } catch {
         setError("Não foi possível carregar as missões.");
       } finally {
@@ -51,18 +73,14 @@ export default function Missions() {
     navigate("/");
   };
 
-  const grouped = missions.reduce<Record<string, Mission[]>>((acc, m) => {
-    const key = m.category?.toLowerCase().replace(/\s/g, "") ?? "default";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(m);
-    return acc;
-  }, {});
+  const groups = useMemo(() => groupByCategory(missions), [missions]);
+  const selectedGroup = groups.find((group) => group.category.key === selectedCategory);
+  const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug);
 
-  const categories = Object.keys(grouped);
-
-  const filtered = activeCategory === "todas"
-    ? grouped
-    : { [activeCategory]: grouped[activeCategory] ?? [] };
+  const closeModule = () => {
+    setSelectedSlug(null);
+    setSelectedCategory(null);
+  };
 
   return (
     <>
@@ -95,25 +113,6 @@ export default function Missions() {
             missionsCompleted={AGENT.missionsCompleted}
           />
 
-          {/* Filtros */}
-          <FiltersWrapper className="d-flex flex-wrap gap-2 mb-4">
-            {["todas", ...categories].map((cat) => {
-              const cfg = cat === "todas"
-                ? { color: "#6366f1", label: "Todas", emoji: "✦" }
-                : getCategoryConfig(cat);
-              return (
-                <FilterButton
-                  key={cat}
-                  $color={cfg.color}
-                  $active={activeCategory === cat}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cfg.emoji} {cat === "todas" ? "Todas" : getCategoryConfig(cat).label}
-                </FilterButton>
-              );
-            })}
-          </FiltersWrapper>
-
           {/* Estados */}
           {loading && (
             <LoadingState>
@@ -124,16 +123,45 @@ export default function Missions() {
 
           {error && <ErrorBox>⚠ {error}</ErrorBox>}
 
-          {/* Missões agrupadas */}
+          {/* Módulos → missões do módulo → coordenadas da missão */}
           {!loading && !error && (
             <MissionsWrapper>
-              {Object.entries(filtered).map(([cat, items]) => (
-                <CategorySection key={cat} category={cat} missions={items} />
-              ))}
+              {selectedMission ? (
+                <>
+                  <BackButton onClick={() => setSelectedSlug(null)}>
+                    ← Voltar às missões
+                  </BackButton>
+                  <MissionDetail mission={selectedMission} />
+                </>
+              ) : selectedGroup ? (
+                <>
+                  <BackButton onClick={closeModule}>
+                    ← Voltar aos módulos
+                  </BackButton>
+                  <CategorySection
+                    category={selectedGroup.category}
+                    missions={selectedGroup.missions}
+                    onSelectMission={(mission) => setSelectedSlug(mission.slug)}
+                  />
+                </>
+              ) : (
+                <ModulesGrid>
+                  {groups.map((group, i) => (
+                    <ModuleCard
+                      key={group.category.key}
+                      category={group.category}
+                      count={group.missions.length}
+                      index={i}
+                      onClick={() => setSelectedCategory(group.category.key)}
+                    />
+                  ))}
+                </ModulesGrid>
+              )}
+
               {missions.length === 0 && (
                 <EmptyState>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
-                  NENHUMA MISSÃO DISPONÍVEL
+                  NENHUMA MISSÃO PUBLICADA AINDA
                 </EmptyState>
               )}
             </MissionsWrapper>

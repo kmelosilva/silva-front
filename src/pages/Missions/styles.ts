@@ -99,6 +99,35 @@ export const FiltersWrapper = styled.div`
   animation: ${fadeUp} .5s .1s ease both;
 `;
 
+export const ModulesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  animation: ${fadeUp} .5s .1s ease both;
+`;
+
+export const BackButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #1e293b;
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all .15s;
+
+  &:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+`;
+
 export const MissionsWrapper = styled.div`
   animation: ${fadeUp} .5s .2s ease both;
 `;
