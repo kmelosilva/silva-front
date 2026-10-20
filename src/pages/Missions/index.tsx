@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMissions } from "../../services/missionService";
 import { useAppDispatch } from "../../store/hooks";
@@ -6,7 +6,7 @@ import { logoutThunk } from "../../store/auth/authActions";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
 import ModuleCard from "../../components/Missions/ModuleCard";
-import type { Mission } from "../../types/mission";
+import type { Category, Mission } from "../../types/mission";
 import {
   GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
   LogoutButton, Content, ModulesGrid, BackButton,
@@ -23,6 +23,27 @@ const AGENT = {
   streak: 5,
 };
 
+interface MissionGroup {
+  category: Category;
+  missions: Mission[];
+}
+
+// Agrupa pela categoria que a API mandou, na ordem em que as missões chegam.
+function groupByCategory(missions: Mission[]): MissionGroup[] {
+  const groups = new Map<string, MissionGroup>();
+
+  for (const mission of missions) {
+    const group = groups.get(mission.category.key);
+    if (group) {
+      group.missions.push(mission);
+    } else {
+      groups.set(mission.category.key, { category: mission.category, missions: [mission] });
+    }
+  }
+
+  return [...groups.values()];
+}
+
 export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +56,7 @@ export default function Missions() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getMissions();
-        setMissions(data.data);
+        setMissions(await getMissions());
       } catch {
         setError("Não foi possível carregar as missões.");
       } finally {
@@ -51,14 +71,8 @@ export default function Missions() {
     navigate("/");
   };
 
-  const grouped = missions.reduce<Record<string, Mission[]>>((acc, m) => {
-    const key = m.category?.toLowerCase().replace(/\s/g, "") ?? "default";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(m);
-    return acc;
-  }, {});
-
-  const categories = Object.keys(grouped);
+  const groups = useMemo(() => groupByCategory(missions), [missions]);
+  const selectedGroup = groups.find((group) => group.category.key === selectedCategory);
 
   return (
     <>
@@ -104,34 +118,34 @@ export default function Missions() {
           {/* Grid de módulos ou missões do módulo selecionado */}
           {!loading && !error && (
             <MissionsWrapper>
-              {selectedCategory === null ? (
-                <ModulesGrid>
-                  {categories.map((cat, i) => (
-                    <ModuleCard
-                      key={cat}
-                      category={cat}
-                      count={grouped[cat].length}
-                      index={i}
-                      onClick={() => setSelectedCategory(cat)}
-                    />
-                  ))}
-                </ModulesGrid>
-              ) : (
+              {selectedGroup ? (
                 <>
                   <BackButton onClick={() => setSelectedCategory(null)}>
                     ← Voltar aos módulos
                   </BackButton>
                   <CategorySection
-                    category={selectedCategory}
-                    missions={grouped[selectedCategory] ?? []}
+                    category={selectedGroup.category}
+                    missions={selectedGroup.missions}
                   />
                 </>
+              ) : (
+                <ModulesGrid>
+                  {groups.map((group, i) => (
+                    <ModuleCard
+                      key={group.category.key}
+                      category={group.category}
+                      count={group.missions.length}
+                      index={i}
+                      onClick={() => setSelectedCategory(group.category.key)}
+                    />
+                  ))}
+                </ModulesGrid>
               )}
 
               {missions.length === 0 && (
                 <EmptyState>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
-                  NENHUMA MISSÃO DISPONÍVEL
+                  NENHUMA MISSÃO PUBLICADA AINDA
                 </EmptyState>
               )}
             </MissionsWrapper>

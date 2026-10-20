@@ -1,5 +1,5 @@
 import type { Mission } from "../../../types/mission";
-import { getCategoryConfig } from "../../../config/categoryConfig";
+import { getCategoryVisual } from "../../../config/categoryConfig";
 import { Card, ImageBox, XPBadge, Title, AcceptButton } from "./styles";
 
 interface MissionCardProps {
@@ -8,21 +8,21 @@ interface MissionCardProps {
 }
 
 export default function MissionCard({ mission, index }: MissionCardProps) {
-  const cfg = getCategoryConfig(mission.category);
+  const visual = getCategoryVisual(mission.category.key);
 
   return (
-    <Card $color={cfg.color} style={{ animationDelay: `${index * 60}ms` }}>
+    <Card $color={visual.color} style={{ animationDelay: `${index * 60}ms` }}>
 
-      <ImageBox $bg={cfg.bg} $color={cfg.color}>
-        <span>{cfg.emoji}</span>
-        <XPBadge $bg={cfg.bg} $color={cfg.color}>
-          +{mission.xp} XP
+      <ImageBox $bg={visual.bg} $color={visual.color}>
+        <span>{visual.emoji}</span>
+        <XPBadge $bg={visual.bg} $color={visual.color}>
+          +{mission.xp_total} XP
         </XPBadge>
       </ImageBox>
 
       <Title>{mission.title}</Title>
 
-      <AcceptButton $color={cfg.color}>
+      <AcceptButton $color={visual.color}>
         Aceitar missão →
       </AcceptButton>
 
