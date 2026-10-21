@@ -13,6 +13,14 @@ export const Category = styled.p<{ $color: string }>`
   margin: 0 0 6px;
 `;
 
+// O aviso honesto de área sem missão, antes da sugestão.
+export const Note = styled.p`
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${colors.textSecondary};
+  margin: 0 0 6px;
+`;
+
 export const Text = styled.p`
   font-size: 16px;
   line-height: 1.5;

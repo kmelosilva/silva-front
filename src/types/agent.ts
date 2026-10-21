@@ -4,6 +4,8 @@ import type { Category } from "./mission";
 
 export interface Agent {
   name: string;
+  // Nulo até o alistamento.
+  codename: string | null;
   level: number;
   xp: number;
   level_xp: number;
@@ -13,6 +15,8 @@ export interface Agent {
     current: number;
     best: number;
   };
+  priorities: Category[];
+  enlisted: boolean;
 }
 
 export interface MissionProgress {
@@ -40,13 +44,16 @@ export interface DailySuggestion {
   mission: {
     slug: string;
     title: string;
-    category: Category;
+    // Nula na missão de entrada.
+    category: Category | null;
   } | null;
   coordinate: {
     slug: string;
     position: number;
     title: string;
   } | null;
+  // Áreas de prioridade sem missão nova, quando a sugestão não é de continuar.
+  unavailable_priorities: Category[];
 }
 
 export interface ApiErrorBody {

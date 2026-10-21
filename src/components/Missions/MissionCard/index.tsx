@@ -11,7 +11,7 @@ interface MissionCardProps {
 }
 
 export default function MissionCard({ mission, progress, index, onSelect }: MissionCardProps) {
-  const visual = getCategoryVisual(mission.category.key);
+  const visual = getCategoryVisual(mission.category?.key);
   const count = mission.coordinates_count;
   const completed = progress?.status === "completed";
 

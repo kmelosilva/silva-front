@@ -45,6 +45,32 @@ export const AgentStatus = styled.p`
   margin: 2px 0 0;
 `;
 
+// As áreas de prioridade, com o atalho para mudar.
+export const Focus = styled.p`
+  font-size: 12px;
+  color: ${colors.textSecondary};
+  margin: 6px 0 0;
+`;
+
+export const FocusButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0 0 0 6px;
+  font-family: ${fonts.reading};
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text};
+  text-decoration: underline;
+  text-decoration-color: ${colors.focus};
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
 export const StatNumber = styled.p<{ $accent?: boolean }>`
   font-family: ${fonts.display};
   font-size: 28px;

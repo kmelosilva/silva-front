@@ -18,7 +18,8 @@ export interface Mission {
   slug: string;
   title: string;
   description: string | null;
-  category: Category;
+  // Nula só na missão de entrada (GET /api/missions/entry); as dos módulos sempre têm.
+  category: Category | null;
   coordinates_count: number;
   xp_total: number;
   coordinates: Coordinate[];
