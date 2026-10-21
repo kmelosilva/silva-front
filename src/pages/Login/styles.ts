@@ -68,6 +68,31 @@ export const Input = styled.input`
   }
 `;
 
+// Caixa de seleção com rótulo clicável, ex.: a declaração de 18+ do cadastro.
+export const CheckRow = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: ${colors.textSecondary};
+  cursor: pointer;
+
+  input {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    accent-color: ${colors.primary};
+    cursor: pointer;
+  }
+
+  input:focus-visible {
+    outline: 2px solid ${colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
 export const SubmitButton = styled.button`
   width: 100%;
   padding: 12px 0;

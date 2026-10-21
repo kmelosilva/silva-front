@@ -40,9 +40,12 @@ export const completeCoordinate = async (
 };
 
 // A API já manda a recusa em PT-BR, pronta para a tela; sem ela, usa o texto padrão.
+// Na validação, a primeira mensagem de campo vem antes do resumo, que o Laravel completa em inglês.
 export const apiErrorMessage = (error: unknown, fallback: string): string => {
   if (isAxiosError<ApiErrorBody>(error)) {
-    return error.response?.data?.error?.message ?? error.response?.data?.message ?? fallback;
+    const body = error.response?.data;
+    const firstFieldError = Object.values(body?.errors ?? {})[0]?.[0];
+    return body?.error?.message ?? firstFieldError ?? body?.message ?? fallback;
   }
   return fallback;
 };

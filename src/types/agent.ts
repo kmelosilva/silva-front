@@ -55,4 +55,6 @@ export interface ApiErrorBody {
     message: string;
   };
   message?: string;
+  // Validação do Laravel (422): as mensagens de cada campo, já em PT-BR.
+  errors?: Record<string, string[]>;
 }

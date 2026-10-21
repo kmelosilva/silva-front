@@ -6,13 +6,14 @@ import { clearError } from "../../store/auth/authSlice";
 import Logo from "../../components/Brand/Logo";
 import {
   PageWrapper, Card, Brand, Slogan, Subtitle,
-  Label, Input, SubmitButton, FooterText, ErrorAlert, ErrorClose,
+  Label, Input, CheckRow, SubmitButton, FooterText, ErrorAlert, ErrorClose,
 } from "../Login/styles";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adult, setAdult] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -20,8 +21,9 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await dispatch(registerThunk({ name, email, password }));
-    if (registerThunk.fulfilled.match(result)) navigate("/");
+    const result = await dispatch(registerThunk({ name, email, password, adult }));
+    // A conta nova já está conectada: segue sem pedir a senha de novo.
+    if (registerThunk.fulfilled.match(result)) navigate("/missions");
   };
 
   return (
@@ -63,7 +65,7 @@ export default function Register() {
               />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-3">
               <Label>Senha</Label>
               <Input
                 type="password"
@@ -73,6 +75,18 @@ export default function Register() {
                 minLength={6}
                 required
               />
+            </div>
+
+            <div className="mb-4">
+              <CheckRow>
+                <input
+                  type="checkbox"
+                  checked={adult}
+                  onChange={(e) => { setAdult(e.target.checked); if (error) dispatch(clearError()); }}
+                  required
+                />
+                Tenho 18 anos ou mais
+              </CheckRow>
             </div>
 
             <SubmitButton type="submit" disabled={loading}>
