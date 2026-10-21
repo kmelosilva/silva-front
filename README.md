@@ -1,73 +1,32 @@
-# React + TypeScript + Vite
+# Silva — front
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App da Agência Silva: o agente aceita missões, cumpre as coordenadas em ordem, ganha XP e sobe de nível. A API fica em [kmelosilva/Silva](https://github.com/kmelosilva/Silva).
 
-Currently, two official plugins are available:
+React 19, TypeScript, Vite 7, Redux Toolkit, styled-components e Bootstrap.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Rodando
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev            # http://localhost:5173 (porta ocupada: npm run dev -- --port 5174)
+npm run build && npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+O endereço da API está em `src/api/api.ts`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Identidade visual
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Tokens:** cores e fontes ficam todas em `src/theme/tokens.ts`. Nenhum outro arquivo escreve cor à mão; para mudar uma cor da marca, troque lá.
+- **Logo:** os vetores da coruja e do logo completo estão em `src/assets/brand/`.
+
+### Fonte da marca (Sequel 100 Wide)
+
+A fonte dos títulos é a **Sequel 100 Wide 95**, da OGJ Type Design, que é licenciada. O arquivo **não está neste repositório**, porque o repositório é público e publicar a fonte seria redistribuí-la.
+
+Para ver os títulos com a fonte da marca, coloque o arquivo da licença em:
+
 ```
+public/fonts/Sequel100Wide-95.otf
+```
+
+A pasta `public/fonts/` está no `.gitignore`. Sem o arquivo, os títulos aparecem em Arial Black, e o logo continua igual, porque é vetor.

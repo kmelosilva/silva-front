@@ -6,10 +6,12 @@ import Login from "./pages/Login/index";
 import Missions from "./pages/Missions/index";
 import Register from "./pages/Register/index";
 import PrivateRoute from "./components/PrivateRoute";
+import { GlobalBrand } from "./theme/GlobalBrand";
 
 function App() {
   return (
     <Provider store={store}>
+      <GlobalBrand />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
