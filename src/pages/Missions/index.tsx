@@ -74,6 +74,7 @@ export default function Missions() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [progress, setProgress] = useState<Record<string, MissionProgress>>({});
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [suggestionStale, setSuggestionStale] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,6 +104,27 @@ export default function Missions() {
     fetchData();
   }, []);
 
+  // A sugestão só aparece nos módulos: depois de aceitar ou cumprir, busca de novo quando o
+  // agente volta para lá, sem disputar o servidor com o próximo clique.
+  useEffect(() => {
+    if (selectedCategory || !suggestionStale) return;
+
+    let active = true;
+    getDailySuggestion()
+      .then((today) => {
+        if (!active) return;
+        setSuggestion(today);
+        setSuggestionStale(false);
+      })
+      .catch(() => {
+        // Fica a sugestão anterior.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedCategory, suggestionStale]);
+
   const handleLogout = async () => {
     await dispatch(logoutThunk());
     navigate("/");
@@ -127,15 +149,6 @@ export default function Missions() {
     openMission(missionSlug);
   };
 
-  // A sugestão muda quando o agente aceita ou avança; buscar de novo é barato e não grava nada.
-  const refreshSuggestion = async () => {
-    try {
-      setSuggestion(await getDailySuggestion());
-    } catch {
-      // Fica a sugestão anterior.
-    }
-  };
-
   const saveProgress = (item: MissionProgress) =>
     setProgress((current) => ({ ...current, [item.mission_slug]: item }));
 
@@ -154,7 +167,7 @@ export default function Missions() {
     try {
       saveProgress(await acceptMission(mission.slug));
       setNotice({ tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
-      refreshSuggestion();
+      setSuggestionStale(true);
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível aceitar a missão. Tente de novo.") });
       await resync();
@@ -171,7 +184,7 @@ export default function Missions() {
       saveProgress(completion.progress);
       setAgent(completion.agent);
       setNotice(completionNotice(completion, mission));
-      refreshSuggestion();
+      setSuggestionStale(true);
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível marcar a coordenada. Tente de novo.") });
       await resync();
