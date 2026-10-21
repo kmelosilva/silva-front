@@ -11,6 +11,8 @@ export interface Coordinate {
   title: string;
   content: string;
   xp: number;
+  // Só nas coordenadas com esforço físico: o aviso de cuidado, mostrado acima do texto.
+  care_notice: string | null;
 }
 
 export interface Mission {
