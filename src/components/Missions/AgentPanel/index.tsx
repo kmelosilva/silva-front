@@ -1,12 +1,14 @@
 import type { Agent } from "../../../types/agent";
+import { getCategoryVisual } from "../../../config/categoryConfig";
 import XPBar from "../XPBar";
 import {
-  Panel, Avatar, AgentName, AgentStatus,
+  Panel, Avatar, AgentName, AgentStatus, Focus, FocusButton,
   StatNumber, StatLabel, XPLabel, Hint,
 } from "./styles";
 
 interface AgentPanelProps {
   agent: Agent;
+  onChangePriorities: () => void;
 }
 
 const days = (count: number) => `${count} ${count === 1 ? "dia" : "dias"}`;
@@ -20,8 +22,11 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-export default function AgentPanel({ agent }: AgentPanelProps) {
+export default function AgentPanel({ agent, onChangePriorities }: AgentPanelProps) {
   const missing = Math.max(agent.next_level_xp - agent.xp, 0);
+  // Depois do alistamento, o agente é chamado pelo codinome.
+  const displayName = agent.codename ?? agent.name;
+  const hasPriority = agent.priorities.length > 0;
 
   return (
     <Panel>
@@ -30,10 +35,24 @@ export default function AgentPanel({ agent }: AgentPanelProps) {
         {/* Avatar + nome */}
         <div className="col-12 col-md-3">
           <div className="d-flex align-items-center gap-3">
-            <Avatar role="img" aria-label={`Iniciais de ${agent.name}`}>{initials(agent.name)}</Avatar>
+            <Avatar role="img" aria-label={`Iniciais de ${displayName}`}>{initials(displayName)}</Avatar>
             <div>
-              <AgentName>{agent.name}</AgentName>
+              <AgentName>{displayName}</AgentName>
               <AgentStatus>AGENTE ATIVO</AgentStatus>
+              {agent.enlisted && (
+                <Focus>
+                  {hasPriority
+                    ? agent.priorities.map((area) => `${getCategoryVisual(area.key).emoji} ${area.label}`).join(" · ")
+                    : "Sem prioridade"}
+                  <FocusButton
+                    type="button"
+                    aria-label={hasPriority ? "Mudar a prioridade" : "Escolher a prioridade"}
+                    onClick={onChangePriorities}
+                  >
+                    {hasPriority ? "mudar" : "escolher"}
+                  </FocusButton>
+                </Focus>
+              )}
             </div>
           </div>
         </div>

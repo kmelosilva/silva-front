@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { login as loginService, logout as logoutService, register as registerService } from "../../services/authService";
+import { apiErrorMessage } from "../../services/agentService";
 import type { LoginCredentials, RegisterCredentials, AuthResponse } from "./authTypes";
 
 export const loginThunk = createAsyncThunk<AuthResponse, LoginCredentials>(
@@ -15,14 +16,13 @@ export const loginThunk = createAsyncThunk<AuthResponse, LoginCredentials>(
   }
 );
 
-export const registerThunk = createAsyncThunk<void, RegisterCredentials>(
+export const registerThunk = createAsyncThunk<AuthResponse, RegisterCredentials>(
   "auth/register",
   async (credentials, { rejectWithValue }) => {
     try {
-      await registerService(credentials.name, credentials.email, credentials.password);
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Erro ao criar conta. Tente novamente.";
-      return rejectWithValue(message);
+      return await registerService(credentials.name, credentials.email, credentials.password, credentials.adult);
+    } catch (err) {
+      return rejectWithValue(apiErrorMessage(err, "Não foi possível criar a conta. Tente de novo."));
     }
   }
 );

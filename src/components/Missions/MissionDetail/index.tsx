@@ -1,6 +1,6 @@
 import type { Coordinate, Mission } from "../../../types/mission";
 import type { MissionProgress } from "../../../types/agent";
-import { getCategoryVisual } from "../../../config/categoryConfig";
+import { categoryLabel, getCategoryVisual } from "../../../config/categoryConfig";
 import MentorMessage from "../../Brand/MentorMessage";
 import {
   Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox, NoticeSpot,
@@ -24,7 +24,7 @@ interface MissionDetailProps {
 export default function MissionDetail({
   mission, progress, busy, notice, onAccept, onComplete,
 }: MissionDetailProps) {
-  const visual = getCategoryVisual(mission.category.key);
+  const visual = getCategoryVisual(mission.category?.key);
   const count = mission.coordinates_count;
   const done = progress?.completed_coordinates ?? [];
   const completed = progress?.status === "completed";
@@ -34,7 +34,7 @@ export default function MissionDetail({
       <Header $color={visual.color}>
         <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
           <CategoryTag $color={visual.color} $bg={visual.bg}>
-            {visual.emoji} {mission.category.label.toUpperCase()}
+            {visual.emoji} {categoryLabel(mission.category).toUpperCase()}
           </CategoryTag>
           {progress && (
             <StatusTag $done={completed}>

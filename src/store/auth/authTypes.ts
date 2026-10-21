@@ -14,6 +14,7 @@ export interface AuthState {
     name: string;
     email: string;
     password: string;
+    adult: boolean;
   }
   
   export interface AuthResponse {

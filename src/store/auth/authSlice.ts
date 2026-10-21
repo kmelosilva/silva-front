@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { AuthState } from "./authTypes";
-import { loginThunk, logoutThunk } from "./authActions";
+import { loginThunk, logoutThunk, registerThunk } from "./authActions";
 
 const initialState: AuthState = {
   token: localStorage.getItem("token"),
@@ -32,6 +32,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.authenticated = false;
+      });
+
+    // O cadastro conecta como o login: a API já devolve o token.
+    builder
+      .addCase(registerThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+        state.authenticated = true;
+      })
+      .addCase(registerThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
 
     builder

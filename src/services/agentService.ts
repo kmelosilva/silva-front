@@ -4,7 +4,7 @@ import type {
   Agent, ApiErrorBody, CompletionResult, DailySuggestion, MissionProgress,
 } from "../types/agent";
 
-const authHeaders = () => ({
+export const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`
 });
 
@@ -39,10 +39,19 @@ export const completeCoordinate = async (
   return response.data.data;
 };
 
+// Lista vazia tira a prioridade. Devolve o painel atualizado.
+export const updatePriorities = async (priorities: string[]): Promise<Agent> => {
+  const response = await api.put<{ data: Agent }>("/agent/priorities", { priorities }, { headers: authHeaders() });
+  return response.data.data;
+};
+
 // A API já manda a recusa em PT-BR, pronta para a tela; sem ela, usa o texto padrão.
+// Na validação, a primeira mensagem de campo vem antes do resumo, que o Laravel completa em inglês.
 export const apiErrorMessage = (error: unknown, fallback: string): string => {
   if (isAxiosError<ApiErrorBody>(error)) {
-    return error.response?.data?.error?.message ?? error.response?.data?.message ?? fallback;
+    const body = error.response?.data;
+    const firstFieldError = Object.values(body?.errors ?? {})[0]?.[0];
+    return body?.error?.message ?? firstFieldError ?? body?.message ?? fallback;
   }
   return fallback;
 };

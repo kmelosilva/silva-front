@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getMissions } from "../../services/missionService";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getEntryMission, getMissions } from "../../services/missionService";
 import {
   acceptMission, apiErrorMessage, completeCoordinate, getAgent, getDailySuggestion, getMyMissions,
 } from "../../services/agentService";
+import { isLater, later } from "../../services/later";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
+import AgencyInvite from "../../components/Missions/AgencyInvite";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
 import DailySuggestion from "../../components/Missions/DailySuggestion";
 import MissionDetail, { type Notice } from "../../components/Missions/MissionDetail";
 import ModuleCard from "../../components/Missions/ModuleCard";
+import PriorityChooser from "../../components/Missions/PriorityChooser";
 import Logo from "../../components/Brand/Logo";
 import { colors } from "../../theme/tokens";
 import type { Category, Coordinate, Mission } from "../../types/mission";
@@ -35,7 +38,9 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
   }
 
   const parts: string[] = [];
-  if (result.mission_completed) {
+  if (result.mission_completed && mission.category === null) {
+    parts.push("Missão de entrada concluída! Agora você é um agente da Silva de verdade.");
+  } else if (result.mission_completed) {
     parts.push(mission.coordinates_count === 1
       ? "Missão concluída! Você cumpriu a coordenada desta missão."
       : `Missão concluída! Você cumpriu as ${mission.coordinates_count} coordenadas.`);
@@ -49,6 +54,13 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
   return { tone: fromAgency ? "highlight" : "success", text: parts.join(" ") };
 }
 
+// O estado que o alistamento deixa na navegação: o codinome de quem acabou de se alistar.
+function welcomeFrom(state: unknown): Notice | null {
+  if (!state || typeof state !== "object" || !("enlisted" in state)) return null;
+  const codename = typeof state.enlisted === "string" ? `, ${state.enlisted}` : "";
+  return { tone: "highlight", text: `Alistamento concluído${codename}! Sua primeira missão já está em andamento.` };
+}
+
 const bySlug = (list: MissionProgress[]) =>
   Object.fromEntries(list.map((item) => [item.mission_slug, item]));
 
@@ -58,15 +70,19 @@ interface MissionGroup {
 }
 
 // Agrupa pela categoria que a API mandou, na ordem em que as missões chegam.
+// As missões dos módulos sempre têm categoria; só a de entrada não tem, e ela não vem aqui.
 function groupByCategory(missions: Mission[]): MissionGroup[] {
   const groups = new Map<string, MissionGroup>();
 
   for (const mission of missions) {
-    const group = groups.get(mission.category.key);
+    const category = mission.category;
+    if (!category) continue;
+
+    const group = groups.get(category.key);
     if (group) {
       group.missions.push(mission);
     } else {
-      groups.set(mission.category.key, { category: mission.category, missions: [mission] });
+      groups.set(category.key, { category, missions: [mission] });
     }
   }
 
@@ -85,33 +101,71 @@ export default function Missions() {
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [entryMission, setEntryMission] = useState<Mission | null>(null);
+  const [choosingPriority, setChoosingPriority] = useState(false);
+  const [priorityLater, setPriorityLater] = useState(() => isLater("priorities"));
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Vindo do alistamento, a página abre a primeira missão com a boas-vindas do mentor.
+  const [welcome] = useState(() => welcomeFrom(location.state));
 
+  // Uma carga desmontada (ou repetida pelo StrictMode) não pode mexer na tela: sem isso, a
+  // segunda resposta reabria a missão de entrada depois de o agente já ter saído dela.
   useEffect(() => {
+    let active = true;
+
     const fetchData = async () => {
       try {
         const [catalog, panel, mine, today] = await Promise.all([
           getMissions(), getAgent(), getMyMissions(), getDailySuggestion(),
         ]);
+        if (!active) return;
+
+        // Quem ainda não se alistou vai para o alistamento, a não ser que tenha dito
+        // "agora não" nesta sessão.
+        if (!panel.enlisted && !isLater("enlistment")) {
+          navigate("/alistamento", { replace: true });
+          return;
+        }
+
+        // A missão de entrada fica fora dos módulos: só é buscada quando vai aparecer.
+        const entryShown = welcome !== null || (today.mission !== null && today.mission.category === null);
+        const entry = entryShown ? await getEntryMission().catch(() => null) : null;
+        if (!active) return;
+
         setMissions(catalog);
         setAgent(panel);
         setProgress(bySlug(mine));
         setSuggestion(today);
+        setEntryMission(entry);
+
+        if (welcome !== null && entry) {
+          setSelectedSlug(entry.slug);
+          setNotice(welcome);
+        }
+        if (welcome !== null) {
+          // A boas-vindas aparece uma vez: recarregar a página não a repete.
+          navigate("/missions", { replace: true, state: null });
+        }
       } catch {
-        setError("Não foi possível carregar as missões.");
+        if (active) setError("Não foi possível carregar as missões.");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     fetchData();
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [navigate, welcome]);
 
   // A sugestão só aparece nos módulos: depois de aceitar ou cumprir, busca de novo quando o
   // agente volta para lá, sem disputar o servidor com o próximo clique.
   useEffect(() => {
-    if (selectedCategory || !suggestionStale) return;
+    if (selectedCategory || selectedSlug || choosingPriority || !suggestionStale) return;
 
     let active = true;
     getDailySuggestion()
@@ -127,7 +181,7 @@ export default function Missions() {
     return () => {
       active = false;
     };
-  }, [selectedCategory, suggestionStale]);
+  }, [selectedCategory, selectedSlug, choosingPriority, suggestionStale]);
 
   const handleLogout = async () => {
     await dispatch(logoutThunk());
@@ -136,7 +190,9 @@ export default function Missions() {
 
   const groups = useMemo(() => groupByCategory(missions), [missions]);
   const selectedGroup = groups.find((group) => group.category.key === selectedCategory);
-  const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug);
+  // A missão de entrada não está em nenhum módulo: abre sem categoria selecionada.
+  const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug)
+    ?? (selectedSlug !== null && entryMission?.slug === selectedSlug ? entryMission : undefined);
 
   const openMission = (slug: string | null) => {
     setNotice(null);
@@ -148,9 +204,20 @@ export default function Missions() {
     setSelectedCategory(null);
   };
 
-  const openSuggested = (categoryKey: string, missionSlug: string) => {
+  const openSuggested = (categoryKey: string | null, missionSlug: string) => {
     setSelectedCategory(categoryKey);
     openMission(missionSlug);
+  };
+
+  const openPriorities = () => {
+    closeModule();
+    setChoosingPriority(true);
+  };
+
+  const savePriorities = (updated: Agent) => {
+    setAgent(updated);
+    setChoosingPriority(false);
+    setSuggestionStale(true);
   };
 
   const saveProgress = (item: MissionProgress) =>
@@ -221,7 +288,7 @@ export default function Missions() {
       <Content>
 
         {/* Painel do agente */}
-        {agent && <AgentPanel agent={agent} />}
+        {agent && <AgentPanel agent={agent} onChangePriorities={openPriorities} />}
 
         {/* Estados */}
         {loading && (
@@ -236,11 +303,23 @@ export default function Missions() {
         {/* Módulos → missões do módulo → coordenadas da missão */}
         {!loading && !error && (
           <MissionsWrapper>
-            {selectedMission ? (
+            {choosingPriority && agent ? (
+              <PriorityChooser
+                current={agent.priorities}
+                onSaved={savePriorities}
+                onCancel={() => setChoosingPriority(false)}
+              />
+            ) : selectedMission ? (
               <>
-                <BackButton onClick={() => openMission(null)}>
-                  ← Voltar às missões
-                </BackButton>
+                {selectedGroup ? (
+                  <BackButton onClick={() => openMission(null)}>
+                    ← Voltar às missões
+                  </BackButton>
+                ) : (
+                  <BackButton onClick={closeModule}>
+                    ← Voltar aos módulos
+                  </BackButton>
+                )}
                 <MissionDetail
                   mission={selectedMission}
                   progress={progress[selectedMission.slug]}
@@ -264,6 +343,23 @@ export default function Missions() {
               </>
             ) : (
               <>
+                {agent && !agent.enlisted && (
+                  <AgencyInvite
+                    label="Alistamento"
+                    text="Sua ficha de alistamento está esperando por você."
+                    actionLabel="Continuar alistamento →"
+                    onAction={() => navigate("/alistamento")}
+                  />
+                )}
+                {agent?.enlisted && agent.priorities.length === 0 && !priorityLater && (
+                  <AgencyInvite
+                    label="Prioridade"
+                    text="Em que área você quer evoluir primeiro? Assim a sugestão do dia fica do seu jeito."
+                    actionLabel="Escolher prioridade"
+                    onAction={openPriorities}
+                    onLater={() => { later("priorities"); setPriorityLater(true); }}
+                  />
+                )}
                 {suggestion && <DailySuggestion suggestion={suggestion} onOpen={openSuggested} />}
                 <ModulesGrid>
                   {groups.map((group, i) => (
