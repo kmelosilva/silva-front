@@ -68,6 +68,14 @@ export const Meta = styled.p`
   margin: 0 0 14px;
 `;
 
+export const Status = styled.p<{ $done: boolean }>`
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: ${({ $done }) => ($done ? "#86efac" : "#fcd34d")};
+  margin: -8px 0 14px;
+`;
+
 export const OpenButton = styled.button<{ $color: string }>`
   width: 100%;
   padding: 9px 0;

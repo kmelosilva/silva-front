@@ -1,4 +1,5 @@
 import type { Category, Mission } from "../../../types/mission";
+import type { MissionProgress } from "../../../types/agent";
 import { getCategoryVisual } from "../../../config/categoryConfig";
 import MissionCard from "../MissionCard";
 import { Section, CategoryBar, CategoryLabel, CategoryCount, Grid } from "./styles";
@@ -6,10 +7,11 @@ import { Section, CategoryBar, CategoryLabel, CategoryCount, Grid } from "./styl
 interface CategorySectionProps {
   category: Category;
   missions: Mission[];
+  progress: Record<string, MissionProgress>;
   onSelectMission: (mission: Mission) => void;
 }
 
-export default function CategorySection({ category, missions, onSelectMission }: CategorySectionProps) {
+export default function CategorySection({ category, missions, progress, onSelectMission }: CategorySectionProps) {
   const visual = getCategoryVisual(category.key);
 
   return (
@@ -24,7 +26,13 @@ export default function CategorySection({ category, missions, onSelectMission }:
 
       <Grid>
         {missions.map((mission, i) => (
-          <MissionCard key={mission.id} mission={mission} index={i} onSelect={onSelectMission} />
+          <MissionCard
+            key={mission.id}
+            mission={mission}
+            progress={progress[mission.slug]}
+            index={i}
+            onSelect={onSelectMission}
+          />
         ))}
       </Grid>
     </Section>
