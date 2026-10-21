@@ -22,8 +22,8 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(registerThunk({ name, email, password, adult }));
-    // A conta nova já está conectada: segue sem pedir a senha de novo.
-    if (registerThunk.fulfilled.match(result)) navigate("/missions");
+    // A conta nova já está conectada: segue para o alistamento, sem pedir a senha de novo.
+    if (registerThunk.fulfilled.match(result)) navigate("/alistamento");
   };
 
   return (

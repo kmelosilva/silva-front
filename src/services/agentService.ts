@@ -4,7 +4,7 @@ import type {
   Agent, ApiErrorBody, CompletionResult, DailySuggestion, MissionProgress,
 } from "../types/agent";
 
-const authHeaders = () => ({
+export const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`
 });
 

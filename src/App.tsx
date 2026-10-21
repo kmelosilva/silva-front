@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/index";
 
+import Enlistment from "./pages/Enlistment/index";
 import Login from "./pages/Login/index";
 import Missions from "./pages/Missions/index";
 import Register from "./pages/Register/index";
@@ -18,6 +19,14 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           {/* Rotas protegidas */}
+          <Route
+            path="/alistamento"
+            element={
+              <PrivateRoute>
+                <Enlistment />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/missions"
             element={
