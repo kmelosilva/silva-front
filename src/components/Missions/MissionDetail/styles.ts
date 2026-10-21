@@ -1,16 +1,14 @@
 import styled, { keyframes } from "styled-components";
+import { colors, fonts } from "../../../theme/tokens";
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-// Texto corrido em fonte de leitura: a DM Mono cansa em parágrafo longo.
-const readingFont = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
-
 export const Header = styled.header<{ $color: string }>`
-  background: #080f1a;
-  border: 1px solid #1e293b;
+  background: ${colors.surface};
+  border: 1px solid ${colors.raised};
   border-left: 3px solid ${({ $color }) => $color};
   border-radius: 16px;
   padding: 24px;
@@ -20,53 +18,52 @@ export const Header = styled.header<{ $color: string }>`
 
 export const CategoryTag = styled.span<{ $color: string; $bg: string }>`
   display: inline-block;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 2px;
   color: ${({ $color }) => $color};
   background: ${({ $bg }) => $bg};
-  border: 1px solid ${({ $color }) => $color}44;
+  border: 1px solid ${({ $color }) => $color}55;
   padding: 3px 8px;
   border-radius: 4px;
 `;
 
 export const StatusTag = styled.span<{ $done: boolean }>`
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 2px;
-  color: ${({ $done }) => ($done ? "#86efac" : "#fcd34d")};
-  border: 1px solid ${({ $done }) => ($done ? "#86efac44" : "#fcd34d44")};
+  color: ${({ $done }) => ($done ? colors.success : colors.attention)};
+  background: ${colors.base};
+  border: 1px solid ${({ $done }) => ($done ? colors.success : colors.attention)}55;
   padding: 3px 8px;
   border-radius: 4px;
 `;
 
 export const Title = styled.h2`
-  font-family: 'Syne', sans-serif;
+  font-family: ${fonts.display};
   font-size: 24px;
-  font-weight: 800;
-  color: #f8fafc;
-  margin: 0 0 8px;
+  color: ${colors.text};
+  margin: 0 0 10px;
 `;
 
 export const Description = styled.p`
-  font-family: ${readingFont};
   font-size: 15px;
   line-height: 1.6;
-  color: #cbd5e1;
+  color: ${colors.textSecondary};
   margin: 0 0 12px;
 `;
 
 export const Meta = styled.p`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: ${colors.textMuted};
   margin: 0;
 `;
 
-const button = (color: string) => `
-  font-family: 'DM Mono', monospace;
+const button = `
+  font-family: ${fonts.reading};
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -75,37 +72,37 @@ const button = (color: string) => `
   transition: all .2s ease;
 
   &:disabled {
-    opacity: .5;
+    opacity: .6;
     cursor: wait;
   }
 
   &:focus-visible {
-    outline: 2px solid ${color};
+    outline: 2px solid ${colors.focus};
     outline-offset: 2px;
   }
 `;
 
-export const AcceptButton = styled.button<{ $color: string }>`
-  ${({ $color }) => button($color)}
+export const AcceptButton = styled.button`
+  ${button}
   margin-top: 20px;
   padding: 11px 20px;
   font-size: 12px;
-  border: 1px solid ${({ $color }) => $color};
-  background: ${({ $color }) => $color};
-  color: #0b1020;
+  border: 1px solid ${colors.focus}55;
+  background: ${colors.primary};
+  color: ${colors.text};
 
   &:hover:not(:disabled) {
-    filter: brightness(1.1);
+    background: ${colors.raised};
   }
 `;
 
 export const CompleteButton = styled.button<{ $color: string }>`
-  ${({ $color }) => button($color)}
+  ${button}
   margin-top: 16px;
   padding: 9px 16px;
   font-size: 11px;
   border: 1px solid ${({ $color }) => $color};
-  background: transparent;
+  background: ${colors.base};
   color: ${({ $color }) => $color};
 
   &:hover:not(:disabled) {
@@ -114,14 +111,13 @@ export const CompleteButton = styled.button<{ $color: string }>`
 `;
 
 const noticeColors = {
-  success: { fg: "#bbf7d0", bg: "#052e16", border: "#22c55e55" },
-  highlight: { fg: "#ede9fe", bg: "#2e1065", border: "#a78bfa" },
-  info: { fg: "#cbd5e1", bg: "#0f172a", border: "#33415588" },
-  error: { fg: "#fecaca", bg: "#1c0a0a", border: "#f8717155" },
+  success: { fg: colors.success, bg: colors.base, border: `${colors.success}55` },
+  highlight: { fg: colors.text, bg: colors.primary, border: colors.focus },
+  info: { fg: colors.textSecondary, bg: colors.base, border: colors.raised },
+  error: { fg: colors.error, bg: colors.base, border: `${colors.error}66` },
 };
 
 export const NoticeBox = styled.div<{ $tone: keyof typeof noticeColors }>`
-  font-family: ${readingFont};
   font-size: 15px;
   font-weight: ${({ $tone }) => ($tone === "highlight" ? 700 : 400)};
   line-height: 1.5;
@@ -147,21 +143,20 @@ export const Item = styled.li<{ $color: string; $state: "done" | "next" | "idle"
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  background: #080f1a;
+  background: ${colors.surface};
   border: 1px solid ${({ $state, $color }) =>
-    $state === "next" ? $color : $state === "done" ? "#86efac55" : "#1e293b"};
+    $state === "next" ? $color : $state === "done" ? `${colors.success}66` : colors.raised};
   border-radius: 16px;
   padding: 20px;
   animation: ${fadeUp} .4s ease both;
 `;
 
 export const Step = styled.span<{ $color: string }>`
-  font-family: 'Syne', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-family: ${fonts.display};
+  font-size: 18px;
+  line-height: 1.3;
   color: ${({ $color }) => $color};
-  min-width: 32px;
+  min-width: 36px;
 `;
 
 export const ItemBody = styled.div`
@@ -169,29 +164,28 @@ export const ItemBody = styled.div`
   min-width: 0;
 `;
 
+// Título da coordenada na fonte de leitura: a fonte larga da marca fica nos títulos curtos.
 export const ItemTitle = styled.h3`
-  font-family: 'Syne', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  color: #f8fafc;
+  color: ${colors.text};
   margin: 0 0 8px;
 `;
 
 export const ItemText = styled.p`
-  font-family: ${readingFont};
   font-size: 15px;
   line-height: 1.7;
-  color: #cbd5e1;
+  color: ${colors.textSecondary};
   margin: 0;
   white-space: pre-line;
 `;
 
 export const ItemXP = styled.span<{ $color: string }>`
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 1px;
   color: ${({ $color }) => $color};
-  border: 1px solid ${({ $color }) => $color}44;
+  border: 1px solid ${({ $color }) => $color}55;
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;

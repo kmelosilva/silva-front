@@ -1,5 +1,6 @@
 import type { DailySuggestion as Suggestion } from "../../../types/agent";
 import { getCategoryVisual } from "../../../config/categoryConfig";
+import { colors } from "../../../theme/tokens";
 import { Card, Label, Text, Sub, OpenButton } from "./styles";
 
 interface DailySuggestionProps {
@@ -12,8 +13,8 @@ export default function DailySuggestion({ suggestion, onOpen }: DailySuggestionP
 
   if (type === "none" || !mission) {
     return (
-      <Card $color="#94a3b8">
-        <Label $color="#94a3b8">SUGESTÃO DO DIA</Label>
+      <Card $color={colors.textMuted}>
+        <Label $color={colors.textMuted}>SUGESTÃO DO DIA</Label>
         <Text>Você concluiu todas as missões publicadas. Novas missões chegam em breve.</Text>
       </Card>
     );

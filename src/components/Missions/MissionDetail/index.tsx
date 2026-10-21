@@ -46,7 +46,7 @@ export default function MissionDetail({
         <Meta>{count} {count === 1 ? "coordenada" : "coordenadas"} · {mission.xp_total} XP</Meta>
 
         {!progress && (
-          <AcceptButton type="button" $color={visual.color} disabled={busy} onClick={onAccept}>
+          <AcceptButton type="button" disabled={busy} onClick={onAccept}>
             Aceitar missão →
           </AcceptButton>
         )}
