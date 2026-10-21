@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMissions } from "../../services/missionService";
 import {
-  acceptMission, apiErrorMessage, completeCoordinate, getAgent, getMyMissions,
+  acceptMission, apiErrorMessage, completeCoordinate, getAgent, getDailySuggestion, getMyMissions,
 } from "../../services/agentService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
 import AgentPanel from "../../components/Missions/AgentPanel";
 import CategorySection from "../../components/Missions/CategorySection";
+import DailySuggestion from "../../components/Missions/DailySuggestion";
 import MissionDetail, { type Notice } from "../../components/Missions/MissionDetail";
 import ModuleCard from "../../components/Missions/ModuleCard";
 import type { Category, Coordinate, Mission } from "../../types/mission";
-import type { Agent, CompletionResult, MissionProgress } from "../../types/agent";
+import type {
+  Agent, CompletionResult, DailySuggestion as Suggestion, MissionProgress,
+} from "../../types/agent";
 import {
   GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
   LogoutButton, Content, ModulesGrid, BackButton,
@@ -70,6 +73,7 @@ export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [agent, setAgent] = useState<Agent | null>(null);
   const [progress, setProgress] = useState<Record<string, MissionProgress>>({});
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,10 +87,13 @@ export default function Missions() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catalog, panel, mine] = await Promise.all([getMissions(), getAgent(), getMyMissions()]);
+        const [catalog, panel, mine, today] = await Promise.all([
+          getMissions(), getAgent(), getMyMissions(), getDailySuggestion(),
+        ]);
         setMissions(catalog);
         setAgent(panel);
         setProgress(bySlug(mine));
+        setSuggestion(today);
       } catch {
         setError("Não foi possível carregar as missões.");
       } finally {
@@ -115,6 +122,20 @@ export default function Missions() {
     setSelectedCategory(null);
   };
 
+  const openSuggested = (categoryKey: string, missionSlug: string) => {
+    setSelectedCategory(categoryKey);
+    openMission(missionSlug);
+  };
+
+  // A sugestão muda quando o agente aceita ou avança; buscar de novo é barato e não grava nada.
+  const refreshSuggestion = async () => {
+    try {
+      setSuggestion(await getDailySuggestion());
+    } catch {
+      // Fica a sugestão anterior.
+    }
+  };
+
   const saveProgress = (item: MissionProgress) =>
     setProgress((current) => ({ ...current, [item.mission_slug]: item }));
 
@@ -133,6 +154,7 @@ export default function Missions() {
     try {
       saveProgress(await acceptMission(mission.slug));
       setNotice({ tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
+      refreshSuggestion();
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível aceitar a missão. Tente de novo.") });
       await resync();
@@ -149,6 +171,7 @@ export default function Missions() {
       saveProgress(completion.progress);
       setAgent(completion.agent);
       setNotice(completionNotice(completion, mission));
+      refreshSuggestion();
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível marcar a coordenada. Tente de novo.") });
       await resync();
@@ -226,17 +249,20 @@ export default function Missions() {
                   />
                 </>
               ) : (
-                <ModulesGrid>
-                  {groups.map((group, i) => (
-                    <ModuleCard
-                      key={group.category.key}
-                      category={group.category}
-                      count={group.missions.length}
-                      index={i}
-                      onClick={() => setSelectedCategory(group.category.key)}
-                    />
-                  ))}
-                </ModulesGrid>
+                <>
+                  {suggestion && <DailySuggestion suggestion={suggestion} onOpen={openSuggested} />}
+                  <ModulesGrid>
+                    {groups.map((group, i) => (
+                      <ModuleCard
+                        key={group.category.key}
+                        category={group.category}
+                        count={group.missions.length}
+                        index={i}
+                        onClick={() => setSelectedCategory(group.category.key)}
+                      />
+                    ))}
+                  </ModulesGrid>
+                </>
               )}
 
               {missions.length === 0 && (
