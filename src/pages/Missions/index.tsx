@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMissions } from "../../services/missionService";
+import { getAgent } from "../../services/agentService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
 import AgentPanel from "../../components/Missions/AgentPanel";
@@ -8,21 +9,16 @@ import CategorySection from "../../components/Missions/CategorySection";
 import MissionDetail from "../../components/Missions/MissionDetail";
 import ModuleCard from "../../components/Missions/ModuleCard";
 import type { Category, Mission } from "../../types/mission";
+import type { Agent } from "../../types/agent";
 import {
   GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
   LogoutButton, Content, ModulesGrid, BackButton,
   MissionsWrapper, EmptyState, ErrorBox, LoadingState,
 } from "./styles";
 
-// Mock — substituir por selector Redux na Fase 2
-const AGENT = {
-  name: "Agente Silva",
-  level: 4,
-  xp: 1340,
-  xpNext: 2000,
-  missionsCompleted: 17,
-  streak: 5,
-};
+// Sequência zerada é um convite, nunca uma perda.
+const streakLabel = (current: number) =>
+  current === 0 ? "comece hoje" : `${current} ${current === 1 ? "dia" : "dias"}`;
 
 interface MissionGroup {
   category: Category;
@@ -47,6 +43,7 @@ function groupByCategory(missions: Mission[]): MissionGroup[] {
 
 export default function Missions() {
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -58,7 +55,9 @@ export default function Missions() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setMissions(await getMissions());
+        const [catalog, panel] = await Promise.all([getMissions(), getAgent()]);
+        setMissions(catalog);
+        setAgent(panel);
       } catch {
         setError("Não foi possível carregar as missões.");
       } finally {
@@ -92,12 +91,16 @@ export default function Missions() {
         <Navbar className="d-flex align-items-center justify-content-between">
           <NavBrand>SILVA<span>.</span></NavBrand>
           <div className="d-flex align-items-center gap-2">
-            <Badge $color="#f59e0b" $bg="#1c1002" $border="#f59e0b33">
-              🔥 {AGENT.streak} dias
-            </Badge>
-            <Badge $color="#a78bfa" $bg="#1e1b4b" $border="#6366f133">
-              LVL {AGENT.level}
-            </Badge>
+            {agent && (
+              <>
+                <Badge $color="#f59e0b" $bg="#1c1002" $border="#f59e0b33">
+                  🔥 {streakLabel(agent.streak.current)}
+                </Badge>
+                <Badge $color="#a78bfa" $bg="#1e1b4b" $border="#6366f133">
+                  LVL {agent.level}
+                </Badge>
+              </>
+            )}
             <LogoutButton onClick={handleLogout}>SAIR</LogoutButton>
           </div>
         </Navbar>
@@ -105,13 +108,7 @@ export default function Missions() {
         <Content>
 
           {/* Painel do agente */}
-          <AgentPanel
-            name={AGENT.name}
-            level={AGENT.level}
-            xp={AGENT.xp}
-            xpNext={AGENT.xpNext}
-            missionsCompleted={AGENT.missionsCompleted}
-          />
+          {agent && <AgentPanel agent={agent} />}
 
           {/* Estados */}
           {loading && (

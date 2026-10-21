@@ -66,3 +66,11 @@ export const XPLabel = styled.p`
   letter-spacing: 1px;
   margin: 0 0 8px;
 `;
+
+export const Hint = styled.p`
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin: 8px 0 0;
+`;
