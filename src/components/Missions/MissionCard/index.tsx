@@ -1,16 +1,19 @@
 import type { Mission } from "../../../types/mission";
+import type { MissionProgress } from "../../../types/agent";
 import { getCategoryVisual } from "../../../config/categoryConfig";
-import { Card, ImageBox, XPBadge, Title, Meta, OpenButton } from "./styles";
+import { Card, ImageBox, XPBadge, Title, Meta, Status, OpenButton } from "./styles";
 
 interface MissionCardProps {
   mission: Mission;
+  progress?: MissionProgress;
   index: number;
   onSelect: (mission: Mission) => void;
 }
 
-export default function MissionCard({ mission, index, onSelect }: MissionCardProps) {
+export default function MissionCard({ mission, progress, index, onSelect }: MissionCardProps) {
   const visual = getCategoryVisual(mission.category.key);
   const count = mission.coordinates_count;
+  const completed = progress?.status === "completed";
 
   return (
     <Card
@@ -29,8 +32,16 @@ export default function MissionCard({ mission, index, onSelect }: MissionCardPro
       <Title>{mission.title}</Title>
       <Meta>{count} {count === 1 ? "coordenada" : "coordenadas"}</Meta>
 
+      {progress && (
+        <Status $done={completed}>
+          {completed
+            ? "CONCLUÍDA ✓"
+            : `EM ANDAMENTO · ${progress.completed_coordinates.length}/${count}`}
+        </Status>
+      )}
+
       <OpenButton type="button" $color={visual.color}>
-        Ver coordenadas →
+        {!progress ? "Ver coordenadas →" : completed ? "Rever coordenadas →" : "Continuar →"}
       </OpenButton>
 
     </Card>
