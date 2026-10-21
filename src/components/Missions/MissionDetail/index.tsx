@@ -4,7 +4,7 @@ import { categoryLabel, getCategoryVisual } from "../../../config/categoryConfig
 import MentorMessage from "../../Brand/MentorMessage";
 import {
   Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox, NoticeSpot,
-  List, Item, Step, ItemBody, ItemTitle, ItemText, ItemXP, CompleteButton,
+  List, Item, Step, ItemBody, ItemTitle, CareNote, ItemText, ItemXP, CompleteButton,
 } from "./styles";
 
 export interface Notice {
@@ -82,6 +82,12 @@ export default function MissionDetail({
               </Step>
               <ItemBody>
                 <ItemTitle>{coordinate.title}</ItemTitle>
+                {coordinate.care_notice && (
+                  <CareNote role="note">
+                    <strong>No seu ritmo</strong>
+                    {coordinate.care_notice}
+                  </CareNote>
+                )}
                 <ItemText>{coordinate.content}</ItemText>
                 {isNext && (
                   <CompleteButton

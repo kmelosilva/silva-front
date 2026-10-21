@@ -178,6 +178,29 @@ export const ItemTitle = styled.h3`
   margin: 0 0 8px;
 `;
 
+// O aviso de cuidado das coordenadas com esforço físico: discreto, sem cor de alerta,
+// e nunca no lugar do texto.
+export const CareNote = styled.div`
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-left: 3px solid ${colors.focus};
+  border-radius: 8px;
+  background: ${colors.base};
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${colors.textSecondary};
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: ${colors.textMuted};
+  }
+`;
+
 export const ItemText = styled.p`
   font-size: 15px;
   line-height: 1.7;
