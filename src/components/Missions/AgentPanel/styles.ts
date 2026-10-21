@@ -18,12 +18,14 @@ export const Avatar = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: ${colors.base};
+  background: ${colors.primary};
   border: 2px solid ${colors.focus};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-family: ${fonts.display};
+  font-size: 15px;
+  color: ${colors.text};
   animation: ${pulseGlow} 3s ease infinite;
   flex-shrink: 0;
 `;

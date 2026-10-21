@@ -28,6 +28,7 @@ const streakLabel = (current: number) =>
   current === 0 ? "comece hoje" : `${current} ${current === 1 ? "dia" : "dias"}`;
 
 // O aviso depois de cumprir: missão concluída em destaque, depois o XP e o nível.
+// Missão concluída e subida de nível são momentos da agência, assinados pelo mentor.
 function completionNotice({ result, agent }: CompletionResult, mission: Mission): Notice {
   if (result.already_completed) {
     return { tone: "info", text: "Essa coordenada já estava cumprida." };
@@ -44,7 +45,8 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
     parts.push(`Você subiu para o nível ${agent.level}!`);
   }
 
-  return { tone: result.mission_completed ? "highlight" : "success", text: parts.join(" ") };
+  const fromAgency = result.mission_completed || result.levels_gained > 0;
+  return { tone: fromAgency ? "highlight" : "success", text: parts.join(" ") };
 }
 
 const bySlug = (list: MissionProgress[]) =>

@@ -1,27 +1,16 @@
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import { colors, fonts } from "../../../theme/tokens";
 
-const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
-
-export const Card = styled.section<{ $color: string }>`
-  background: ${colors.surface};
-  border: 1px solid ${colors.raised};
-  border-left: 3px solid ${({ $color }) => $color};
-  border-radius: 16px;
-  padding: 20px 24px;
+export const Spot = styled.div`
   margin-bottom: 32px;
-  animation: ${fadeUp} .4s ease both;
 `;
 
-export const Label = styled.p<{ $color: string }>`
+export const Category = styled.p<{ $color: string }>`
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
   color: ${({ $color }) => $color};
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 `;
 
 export const Text = styled.p`

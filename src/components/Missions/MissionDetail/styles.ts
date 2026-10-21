@@ -130,6 +130,12 @@ export const NoticeBox = styled.div<{ $tone: keyof typeof noticeColors }>`
   animation: ${fadeUp} .3s ease both;
 `;
 
+export const NoticeSpot = styled.div`
+  margin-bottom: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+`;
+
 export const List = styled.ol`
   list-style: none;
   padding: 0;

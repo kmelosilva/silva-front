@@ -1,8 +1,9 @@
 import type { Coordinate, Mission } from "../../../types/mission";
 import type { MissionProgress } from "../../../types/agent";
 import { getCategoryVisual } from "../../../config/categoryConfig";
+import MentorMessage from "../../Brand/MentorMessage";
 import {
-  Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox,
+  Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox, NoticeSpot,
   List, Item, Step, ItemBody, ItemTitle, ItemText, ItemXP, CompleteButton,
 } from "./styles";
 
@@ -52,7 +53,13 @@ export default function MissionDetail({
         )}
       </Header>
 
-      {notice && (
+      {/* Missão concluída e subida de nível são da agência: quem fala é o Agente Silva. */}
+      {notice?.tone === "highlight" && (
+        <NoticeSpot>
+          <MentorMessage tone="highlight" live>{notice.text}</MentorMessage>
+        </NoticeSpot>
+      )}
+      {notice && notice.tone !== "highlight" && (
         <NoticeBox $tone={notice.tone} role="status" aria-live="polite">
           {notice.text}
         </NoticeBox>
