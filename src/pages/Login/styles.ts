@@ -1,45 +1,47 @@
-import styled, { createGlobalStyle } from "styled-components";
-
-export const GlobalAuth = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap');
-`;
+import styled from "styled-components";
+import { colors, fonts } from "../../theme/tokens";
 
 export const PageWrapper = styled.div`
   min-height: 100vh;
-  background: #040810;
-  font-family: 'DM Mono', monospace;
+  padding: 24px 16px;
 `;
 
 export const Card = styled.div`
-  background: #080f1a;
-  border: 1px solid #1e293b;
+  background: ${colors.surface};
+  border: 1px solid ${colors.raised};
   border-radius: 20px;
   padding: 40px 36px;
   width: 100%;
   max-width: 400px;
+  box-shadow: 0 24px 64px ${colors.base}aa;
 `;
 
+// O logo é vetor; o h1 dá a ele o papel de título da página.
 export const Brand = styled.h1`
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  color: #f8fafc;
-  letter-spacing: -0.5px;
-  margin: 0 0 4px;
+  color: ${colors.text};
+  line-height: 0;
+  margin: 0 0 16px;
+`;
 
-  span { color: #6366f1; }
+export const Slogan = styled.p`
+  font-family: ${fonts.display};
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: ${colors.textMuted};
+  margin: 0 0 6px;
 `;
 
 export const Subtitle = styled.p`
-  font-size: 11px;
-  color: #475569;
-  letter-spacing: 1px;
-  margin: 0 0 32px;
+  font-size: 13px;
+  color: ${colors.textSecondary};
+  margin: 0 0 28px;
 `;
 
 export const Label = styled.label`
   font-size: 11px;
-  color: #64748b;
+  font-weight: 600;
+  color: ${colors.textSecondary};
   letter-spacing: 1px;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -48,32 +50,32 @@ export const Label = styled.label`
 
 export const Input = styled.input`
   width: 100%;
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: ${colors.base};
+  border: 1px solid ${colors.raised};
   border-radius: 8px;
   padding: 10px 14px;
-  color: #e2e8f0;
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
+  color: ${colors.text};
+  font-family: ${fonts.reading};
+  font-size: 14px;
   transition: border-color .15s;
   outline: none;
 
-  &::placeholder { color: #334155; }
+  &::placeholder { color: ${colors.placeholder}; }
 
   &:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px #6366f122;
+    border-color: ${colors.focus};
+    box-shadow: 0 0 0 3px ${colors.focus}33;
   }
 `;
 
 export const SubmitButton = styled.button`
   width: 100%;
-  padding: 11px 0;
+  padding: 12px 0;
   border-radius: 8px;
-  border: none;
-  background: #6366f1;
-  color: #fff;
-  font-family: 'DM Mono', monospace;
+  border: 1px solid ${colors.focus}55;
+  background: ${colors.primary};
+  color: ${colors.text};
+  font-family: ${fonts.reading};
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -81,30 +83,45 @@ export const SubmitButton = styled.button`
   cursor: pointer;
   transition: background .15s;
 
-  &:hover:not(:disabled) { background: #4f46e5; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { background: ${colors.raised}; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.focus};
+    outline-offset: 2px;
+  }
 `;
 
 export const FooterText = styled.p`
-  font-size: 11px;
-  color: #475569;
+  font-size: 13px;
+  color: ${colors.textSecondary};
   text-align: center;
   margin: 20px 0 0;
 
   a {
-    color: #6366f1;
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
+    color: ${colors.text};
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: ${colors.focus};
+    text-underline-offset: 3px;
   }
 `;
 
 export const ErrorAlert = styled.div`
-  background: #1a0505;
-  border: 1px solid #ef444433;
+  background: ${colors.base};
+  border: 1px solid ${colors.error}66;
   border-radius: 8px;
   padding: 10px 14px;
-  color: #ef4444;
-  font-size: 11px;
-  letter-spacing: 0.5px;
+  color: ${colors.error};
+  font-size: 13px;
   margin-bottom: 20px;
+`;
+
+export const ErrorClose = styled.button`
+  background: none;
+  border: none;
+  color: ${colors.error};
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
 `;

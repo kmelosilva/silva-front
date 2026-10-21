@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginThunk } from "../../store/auth/authActions";
 import { clearError } from "../../store/auth/authSlice";
+import Logo from "../../components/Brand/Logo";
 import {
-  GlobalAuth, PageWrapper, Card, Brand, Subtitle,
-  Label, Input, SubmitButton, FooterText, ErrorAlert,
+  PageWrapper, Card, Brand, Slogan, Subtitle,
+  Label, Input, SubmitButton, FooterText, ErrorAlert, ErrorClose,
 } from "./styles";
 
 export default function Login() {
@@ -24,20 +25,17 @@ export default function Login() {
 
   return (
     <>
-      <GlobalAuth />
       <PageWrapper className="d-flex align-items-center justify-content-center">
         <Card>
 
-          <Brand>SILVA<span>.</span></Brand>
-          <Subtitle>ACESSE SUA CONTA DE AGENTE</Subtitle>
+          <Brand><Logo height={48} /></Brand>
+          <Slogan>Gente como agente</Slogan>
+          <Subtitle>Acesse sua conta de agente.</Subtitle>
 
           {error && (
             <ErrorAlert className="d-flex justify-content-between align-items-center">
               {error}
-              <button
-                onClick={() => dispatch(clearError())}
-                style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16, lineHeight: 1 }}
-              >×</button>
+              <ErrorClose type="button" aria-label="Fechar aviso" onClick={() => dispatch(clearError())}>×</ErrorClose>
             </ErrorAlert>
           )}
 
