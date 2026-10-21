@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { colors, fonts } from "../../../theme/tokens";
 
 export const Section = styled.section`
   margin-bottom: 48px;
@@ -15,16 +16,15 @@ export const CategoryBar = styled.span<{ $color: string }>`
 `;
 
 export const CategoryLabel = styled.span<{ $color: string }>`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-family: ${fonts.display};
+  font-size: 13px;
   color: ${({ $color }) => $color};
   letter-spacing: 2px;
 `;
 
 export const CategoryCount = styled.span`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #334155;
+  font-size: 12px;
+  color: ${colors.textSecondary};
 `;
 
 export const Grid = styled.div`

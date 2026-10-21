@@ -11,6 +11,15 @@ interface AgentPanelProps {
 
 const days = (count: number) => `${count} ${count === 1 ? "dia" : "dias"}`;
 
+// Primeira letra do primeiro e do último nome, até existir avatar personalizável.
+function initials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  const first = Array.from(words[0])[0];
+  const last = words.length > 1 ? Array.from(words[words.length - 1])[0] : "";
+  return (first + last).toUpperCase();
+}
+
 export default function AgentPanel({ agent }: AgentPanelProps) {
   const missing = Math.max(agent.next_level_xp - agent.xp, 0);
 
@@ -21,7 +30,7 @@ export default function AgentPanel({ agent }: AgentPanelProps) {
         {/* Avatar + nome */}
         <div className="col-12 col-md-3">
           <div className="d-flex align-items-center gap-3">
-            <Avatar>🕵️</Avatar>
+            <Avatar role="img" aria-label={`Iniciais de ${agent.name}`}>{initials(agent.name)}</Avatar>
             <div>
               <AgentName>{agent.name}</AgentName>
               <AgentStatus>AGENTE ATIVO</AgentStatus>

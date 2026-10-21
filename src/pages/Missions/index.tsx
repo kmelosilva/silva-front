@@ -11,12 +11,14 @@ import CategorySection from "../../components/Missions/CategorySection";
 import DailySuggestion from "../../components/Missions/DailySuggestion";
 import MissionDetail, { type Notice } from "../../components/Missions/MissionDetail";
 import ModuleCard from "../../components/Missions/ModuleCard";
+import Logo from "../../components/Brand/Logo";
+import { colors } from "../../theme/tokens";
 import type { Category, Coordinate, Mission } from "../../types/mission";
 import type {
   Agent, CompletionResult, DailySuggestion as Suggestion, MissionProgress,
 } from "../../types/agent";
 import {
-  GlobalMissions, PageWrapper, Navbar, NavBrand, Badge,
+  PageWrapper, Navbar, NavBrand, Badge,
   LogoutButton, Content, ModulesGrid, BackButton,
   MissionsWrapper, EmptyState, ErrorBox, LoadingState,
 } from "./styles";
@@ -26,6 +28,7 @@ const streakLabel = (current: number) =>
   current === 0 ? "comece hoje" : `${current} ${current === 1 ? "dia" : "dias"}`;
 
 // O aviso depois de cumprir: missão concluída em destaque, depois o XP e o nível.
+// Missão concluída e subida de nível são momentos da agência, assinados pelo mentor.
 function completionNotice({ result, agent }: CompletionResult, mission: Mission): Notice {
   if (result.already_completed) {
     return { tone: "info", text: "Essa coordenada já estava cumprida." };
@@ -42,7 +45,8 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
     parts.push(`Você subiu para o nível ${agent.level}!`);
   }
 
-  return { tone: result.mission_completed ? "highlight" : "success", text: parts.join(" ") };
+  const fromAgency = result.mission_completed || result.levels_gained > 0;
+  return { tone: fromAgency ? "highlight" : "success", text: parts.join(" ") };
 }
 
 const bySlug = (list: MissionProgress[]) =>
@@ -194,101 +198,97 @@ export default function Missions() {
   };
 
   return (
-    <>
-      <GlobalMissions />
+    <PageWrapper>
 
-      <PageWrapper>
+      {/* Navbar */}
+      <Navbar className="d-flex align-items-center justify-content-between">
+        <NavBrand><Logo height={28} /></NavBrand>
+        <div className="d-flex align-items-center gap-2">
+          {agent && (
+            <>
+              <Badge $color={colors.attention}>
+                🔥 {streakLabel(agent.streak.current)}
+              </Badge>
+              <Badge $color={colors.focus}>
+                LVL {agent.level}
+              </Badge>
+            </>
+          )}
+          <LogoutButton onClick={handleLogout}>SAIR</LogoutButton>
+        </div>
+      </Navbar>
 
-        {/* Navbar */}
-        <Navbar className="d-flex align-items-center justify-content-between">
-          <NavBrand>SILVA<span>.</span></NavBrand>
-          <div className="d-flex align-items-center gap-2">
-            {agent && (
+      <Content>
+
+        {/* Painel do agente */}
+        {agent && <AgentPanel agent={agent} />}
+
+        {/* Estados */}
+        {loading && (
+          <LoadingState>
+            <div style={{ fontSize: 32, marginBottom: 16 }}>⟳</div>
+            CARREGANDO MISSÕES...
+          </LoadingState>
+        )}
+
+        {error && <ErrorBox>⚠ {error}</ErrorBox>}
+
+        {/* Módulos → missões do módulo → coordenadas da missão */}
+        {!loading && !error && (
+          <MissionsWrapper>
+            {selectedMission ? (
               <>
-                <Badge $color="#f59e0b" $bg="#1c1002" $border="#f59e0b33">
-                  🔥 {streakLabel(agent.streak.current)}
-                </Badge>
-                <Badge $color="#a78bfa" $bg="#1e1b4b" $border="#6366f133">
-                  LVL {agent.level}
-                </Badge>
+                <BackButton onClick={() => openMission(null)}>
+                  ← Voltar às missões
+                </BackButton>
+                <MissionDetail
+                  mission={selectedMission}
+                  progress={progress[selectedMission.slug]}
+                  busy={busy}
+                  notice={notice}
+                  onAccept={() => handleAccept(selectedMission)}
+                  onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
+                />
+              </>
+            ) : selectedGroup ? (
+              <>
+                <BackButton onClick={closeModule}>
+                  ← Voltar aos módulos
+                </BackButton>
+                <CategorySection
+                  category={selectedGroup.category}
+                  missions={selectedGroup.missions}
+                  progress={progress}
+                  onSelectMission={(mission) => openMission(mission.slug)}
+                />
+              </>
+            ) : (
+              <>
+                {suggestion && <DailySuggestion suggestion={suggestion} onOpen={openSuggested} />}
+                <ModulesGrid>
+                  {groups.map((group, i) => (
+                    <ModuleCard
+                      key={group.category.key}
+                      category={group.category}
+                      count={group.missions.length}
+                      index={i}
+                      onClick={() => setSelectedCategory(group.category.key)}
+                    />
+                  ))}
+                </ModulesGrid>
               </>
             )}
-            <LogoutButton onClick={handleLogout}>SAIR</LogoutButton>
-          </div>
-        </Navbar>
 
-        <Content>
+            {missions.length === 0 && (
+              <EmptyState>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+                NENHUMA MISSÃO PUBLICADA AINDA
+              </EmptyState>
+            )}
+          </MissionsWrapper>
+        )}
 
-          {/* Painel do agente */}
-          {agent && <AgentPanel agent={agent} />}
-
-          {/* Estados */}
-          {loading && (
-            <LoadingState>
-              <div style={{ fontSize: 32, marginBottom: 16 }}>⟳</div>
-              CARREGANDO MISSÕES...
-            </LoadingState>
-          )}
-
-          {error && <ErrorBox>⚠ {error}</ErrorBox>}
-
-          {/* Módulos → missões do módulo → coordenadas da missão */}
-          {!loading && !error && (
-            <MissionsWrapper>
-              {selectedMission ? (
-                <>
-                  <BackButton onClick={() => openMission(null)}>
-                    ← Voltar às missões
-                  </BackButton>
-                  <MissionDetail
-                    mission={selectedMission}
-                    progress={progress[selectedMission.slug]}
-                    busy={busy}
-                    notice={notice}
-                    onAccept={() => handleAccept(selectedMission)}
-                    onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
-                  />
-                </>
-              ) : selectedGroup ? (
-                <>
-                  <BackButton onClick={closeModule}>
-                    ← Voltar aos módulos
-                  </BackButton>
-                  <CategorySection
-                    category={selectedGroup.category}
-                    missions={selectedGroup.missions}
-                    progress={progress}
-                    onSelectMission={(mission) => openMission(mission.slug)}
-                  />
-                </>
-              ) : (
-                <>
-                  {suggestion && <DailySuggestion suggestion={suggestion} onOpen={openSuggested} />}
-                  <ModulesGrid>
-                    {groups.map((group, i) => (
-                      <ModuleCard
-                        key={group.category.key}
-                        category={group.category}
-                        count={group.missions.length}
-                        index={i}
-                        onClick={() => setSelectedCategory(group.category.key)}
-                      />
-                    ))}
-                  </ModulesGrid>
-                </>
-              )}
-
-              {missions.length === 0 && (
-                <EmptyState>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
-                  NENHUMA MISSÃO PUBLICADA AINDA
-                </EmptyState>
-              )}
-            </MissionsWrapper>
-          )}
-
-        </Content>
-      </PageWrapper>
-    </>
+      </Content>
+    </PageWrapper>
   );
 }

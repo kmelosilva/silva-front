@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Fonte da marca (Sequel 100 Wide): licenciada, não pode ser redistribuída num repositório público.
+# Cada máquina coloca o próprio arquivo aqui; ver README.
+public/fonts/

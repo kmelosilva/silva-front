@@ -1,13 +1,14 @@
 import styled, { keyframes } from "styled-components";
+import { colors, fonts } from "../../../theme/tokens";
 
 const pulseGlow = keyframes`
-  0%, 100% { box-shadow: 0 0 0 0 #6366f133; }
-  50%       { box-shadow: 0 0 0 8px #6366f100; }
+  0%, 100% { box-shadow: 0 0 0 0 ${colors.focus}44; }
+  50%       { box-shadow: 0 0 0 8px ${colors.focus}00; }
 `;
 
 export const Panel = styled.div`
-  background: #080f1a;
-  border: 1px solid #1e293b;
+  background: ${colors.surface};
+  border: 1px solid ${colors.raised};
   border-radius: 20px;
   padding: 28px 32px;
   margin-bottom: 40px;
@@ -17,60 +18,58 @@ export const Avatar = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: #1e1b4b;
-  border: 2px solid #6366f1;
+  background: ${colors.primary};
+  border: 2px solid ${colors.focus};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-family: ${fonts.display};
+  font-size: 15px;
+  color: ${colors.text};
   animation: ${pulseGlow} 3s ease infinite;
   flex-shrink: 0;
 `;
 
 export const AgentName = styled.p`
-  font-family: 'Syne', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  color: #f8fafc;
+  color: ${colors.text};
   margin: 0;
 `;
 
 export const AgentStatus = styled.p`
-  font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #6366f1;
+  font-weight: 600;
+  color: ${colors.textMuted};
   letter-spacing: 1px;
   margin: 2px 0 0;
 `;
 
 export const StatNumber = styled.p<{ $accent?: boolean }>`
-  font-family: 'Syne', sans-serif;
+  font-family: ${fonts.display};
   font-size: 28px;
-  font-weight: 800;
-  color: ${({ $accent }) => ($accent ? "#a78bfa" : "#f8fafc")};
+  color: ${({ $accent }) => ($accent ? colors.focus : colors.text)};
   margin: 0;
 `;
 
 export const StatLabel = styled.p`
-  font-family: 'DM Mono', monospace;
   font-size: 10px;
-  color: #475569;
+  font-weight: 600;
+  color: ${colors.textSecondary};
   letter-spacing: 1px;
-  margin: 2px 0 0;
+  margin: 4px 0 0;
 `;
 
 export const XPLabel = styled.p`
-  font-family: 'DM Mono', monospace;
   font-size: 11px;
-  color: #a78bfa;
+  font-weight: 700;
+  color: ${colors.textMuted};
   letter-spacing: 1px;
   margin: 0 0 8px;
 `;
 
 export const Hint = styled.p`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #94a3b8;
-  letter-spacing: 1px;
+  font-size: 12px;
+  color: ${colors.textSecondary};
   margin: 8px 0 0;
 `;

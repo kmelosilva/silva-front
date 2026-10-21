@@ -1,4 +1,5 @@
 import styled, { keyframes } from "styled-components";
+import { colors, fonts } from "../../../theme/tokens";
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(14px); }
@@ -6,8 +7,8 @@ const fadeUp = keyframes`
 `;
 
 export const Card = styled.div<{ $color: string }>`
-  background: #080f1a;
-  border: 1px solid #1e293b;
+  background: ${colors.surface};
+  border: 1px solid ${colors.raised};
   border-radius: 16px;
   padding: 24px 20px;
   cursor: pointer;
@@ -16,10 +17,9 @@ export const Card = styled.div<{ $color: string }>`
   text-align: center;
 
   &:hover {
-    background: #0f172a;
-    border-color: ${({ $color }) => $color}55;
+    border-color: ${({ $color }) => $color}88;
     transform: translateY(-2px);
-    box-shadow: ${({ $color }) => `0 8px 32px ${$color}18`};
+    box-shadow: ${({ $color }) => `0 8px 32px ${$color}22`};
   }
 `;
 
@@ -29,9 +29,8 @@ export const Emoji = styled.div`
 `;
 
 export const Label = styled.p<{ $color: string }>`
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: ${fonts.display};
+  font-size: 13px;
   letter-spacing: 1px;
   color: ${({ $color }) => $color};
   margin: 0 0 6px;
@@ -39,8 +38,7 @@ export const Label = styled.p<{ $color: string }>`
 `;
 
 export const Count = styled.p`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #475569;
+  font-size: 12px;
+  color: ${colors.textSecondary};
   margin: 0;
 `;

@@ -10,11 +10,9 @@ html, body, #root {
   height: 100%;
 }
 
-/* Remove interferências do template */
+/* Fundo, cor e fonte do body ficam em src/theme/GlobalBrand.ts, com os tokens da marca. */
 body {
   margin: 0;
-  background-color: #f8f9fa; /* padrão bootstrap */
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 /* NÃO limitar o root */

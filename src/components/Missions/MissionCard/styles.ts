@@ -1,4 +1,5 @@
 import styled, { keyframes } from "styled-components";
+import { colors, fonts } from "../../../theme/tokens";
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(14px); }
@@ -6,8 +7,8 @@ const fadeUp = keyframes`
 `;
 
 export const Card = styled.div<{ $color: string }>`
-  background: #080f1a;
-  border: 1px solid #1e293b;
+  background: ${colors.surface};
+  border: 1px solid ${colors.raised};
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
@@ -15,10 +16,9 @@ export const Card = styled.div<{ $color: string }>`
   transition: all .2s ease;
 
   &:hover {
-    background: #0f172a;
-    border-color: ${({ $color }) => $color}55;
+    border-color: ${({ $color }) => $color}88;
     transform: translateY(-2px);
-    box-shadow: ${({ $color }) => `0 8px 32px ${$color}18`};
+    box-shadow: ${({ $color }) => `0 8px 32px ${$color}22`};
   }
 `;
 
@@ -27,7 +27,7 @@ export const ImageBox = styled.div<{ $bg: string; $color: string }>`
   border-radius: 10px;
   margin-bottom: 14px;
   background: ${({ $bg }) => $bg};
-  border: 1px solid ${({ $color }) => $color}22;
+  border: 1px solid ${({ $color }) => $color}33;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,39 +40,36 @@ export const XPBadge = styled.span<{ $bg: string; $color: string }>`
   position: absolute;
   bottom: 6px;
   right: 8px;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 1px;
   color: ${({ $color }) => $color};
   background: ${({ $bg }) => $bg};
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid ${({ $color }) => $color}44;
+  border: 1px solid ${({ $color }) => $color}55;
 `;
 
 export const Title = styled.p`
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: #e2e8f0;
-  line-height: 1.4;
+  font-family: ${fonts.display};
+  font-size: 13px;
+  color: ${colors.text};
+  line-height: 1.5;
   min-height: 40px;
   margin: 0 0 6px;
 `;
 
 export const Meta = styled.p`
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: #94a3b8;
+  font-size: 12px;
+  color: ${colors.textSecondary};
   margin: 0 0 14px;
 `;
 
 export const Status = styled.p<{ $done: boolean }>`
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 1px;
-  color: ${({ $done }) => ($done ? "#86efac" : "#fcd34d")};
+  color: ${({ $done }) => ($done ? colors.success : colors.attention)};
   margin: -8px 0 14px;
 `;
 
@@ -81,9 +78,9 @@ export const OpenButton = styled.button<{ $color: string }>`
   padding: 9px 0;
   border-radius: 8px;
   border: 1px solid ${({ $color }) => $color};
-  background: transparent;
+  background: ${colors.base};
   color: ${({ $color }) => $color};
-  font-family: 'DM Mono', monospace;
+  font-family: ${fonts.reading};
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
