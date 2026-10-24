@@ -34,7 +34,9 @@ const streakLabel = (current: number) =>
 
 // O aviso depois de cumprir: missão concluída em destaque, depois o XP e o nível.
 // Missão concluída e subida de nível são momentos da agência, assinados pelo mentor.
-function completionNotice({ result, agent }: CompletionResult, mission: Mission): Notice {
+// Na missão de área com submentor, quem fecha a missão é ele (RF-05): o aviso fica com o
+// XP e o nível, e a coruja continua dona da subida de nível.
+function completionNotice({ result, agent }: CompletionResult, mission: Mission, closedBySubmentor: boolean): Notice {
   if (result.already_completed) {
     return { tone: "info", text: "Essa coordenada já estava cumprida." };
   }
@@ -42,7 +44,7 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
   const parts: string[] = [];
   if (result.mission_completed && mission.category === null) {
     parts.push("Missão de entrada concluída! Agora você é um agente da Silva de verdade.");
-  } else if (result.mission_completed) {
+  } else if (result.mission_completed && !closedBySubmentor) {
     parts.push(mission.coordinates_count === 1
       ? "Missão concluída! Você cumpriu a coordenada desta missão."
       : `Missão concluída! Você cumpriu as ${mission.coordinates_count} coordenadas.`);
@@ -52,7 +54,7 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
     parts.push(`Você subiu para o nível ${agent.level}!`);
   }
 
-  const fromAgency = result.mission_completed || result.levels_gained > 0;
+  const fromAgency = (result.mission_completed && !closedBySubmentor) || result.levels_gained > 0;
   return { tone: fromAgency ? "highlight" : "success", text: parts.join(" ") };
 }
 
@@ -107,6 +109,8 @@ export default function Missions() {
   const [submentors, setSubmentors] = useState<Submentor[]>([]);
   // A coordenada recém-cumprida que oferece a reflexão.
   const [reflectingOn, setReflectingOn] = useState<string | null>(null);
+  // O fechamento do submentor espera a reflexão da última coordenada (ou o "Agora não").
+  const [closing, setClosing] = useState<"none" | "pending" | "shown">("none");
   const [choosingPriority, setChoosingPriority] = useState(false);
   const [priorityLater, setPriorityLater] = useState(() => isLater("priorities"));
 
@@ -216,6 +220,7 @@ export default function Missions() {
   const openMission = (slug: string | null) => {
     setNotice(null);
     setReflectingOn(null);
+    setClosing("none");
     setSelectedSlug(slug);
   };
 
@@ -253,8 +258,10 @@ export default function Missions() {
   };
 
   // "Agora não" fecha a caixa; respondida, a resposta fica na tela até o próximo passo.
+  // Na última coordenada, as duas coisas abrem o fechamento da missão.
   const handleReflectionFinish = (reflection: Reflection | null) => {
     if (reflection === null) setReflectingOn(null);
+    setClosing((current) => (current === "pending" ? "shown" : current));
   };
 
   const handleAccept = async (mission: Mission) => {
@@ -279,15 +286,18 @@ export default function Missions() {
     setBusy(true);
     setNotice(null);
     setReflectingOn(null);
+    setClosing("none");
     try {
       const completion = await completeCoordinate(mission.slug, coordinate.slug);
+      const withSubmentor = submentorOf(mission) !== undefined;
       saveProgress(completion.progress);
       setAgent(completion.agent);
-      setNotice(completionNotice(completion, mission));
+      setNotice(completionNotice(completion, mission, withSubmentor));
       setSuggestionStale(true);
       // O XP já chegou; escrever é opcional e vem depois (RF-03).
-      if (submentorOf(mission) && !completion.result.already_completed) {
+      if (withSubmentor && !completion.result.already_completed) {
         setReflectingOn(coordinate.slug);
+        if (completion.result.mission_completed) setClosing("pending");
       }
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível marcar a coordenada. Tente de novo.") });
@@ -358,9 +368,11 @@ export default function Missions() {
                   mission={selectedMission}
                   progress={progress[selectedMission.slug]}
                   submentor={submentorOf(selectedMission)}
+                  codename={agent?.codename ?? "agente"}
                   busy={busy}
                   notice={notice}
                   reflectingOn={reflectingOn}
+                  closing={closing === "shown"}
                   onAccept={() => handleAccept(selectedMission)}
                   onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
                   onMeet={handleMeet}
