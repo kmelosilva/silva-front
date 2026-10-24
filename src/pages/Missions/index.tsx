@@ -5,6 +5,7 @@ import {
   acceptMission, apiErrorMessage, completeCoordinate, getAgent, getDailySuggestion, getMyMissions,
 } from "../../services/agentService";
 import { isLater, later } from "../../services/later";
+import { getSubmentors, meetSubmentor } from "../../services/mentoringService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
 import AgencyInvite from "../../components/Missions/AgencyInvite";
@@ -17,6 +18,7 @@ import PriorityChooser from "../../components/Missions/PriorityChooser";
 import Logo from "../../components/Brand/Logo";
 import { colors } from "../../theme/tokens";
 import type { Category, Coordinate, Mission } from "../../types/mission";
+import type { Submentor } from "../../types/mentoring";
 import type {
   Agent, CompletionResult, DailySuggestion as Suggestion, MissionProgress,
 } from "../../types/agent";
@@ -102,6 +104,7 @@ export default function Missions() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [entryMission, setEntryMission] = useState<Mission | null>(null);
+  const [submentors, setSubmentors] = useState<Submentor[]>([]);
   const [choosingPriority, setChoosingPriority] = useState(false);
   const [priorityLater, setPriorityLater] = useState(() => isLater("priorities"));
 
@@ -118,8 +121,10 @@ export default function Missions() {
 
     const fetchData = async () => {
       try {
-        const [catalog, panel, mine, today] = await Promise.all([
+        // Sem os submentores, as missões funcionam como antes: a mentoria nunca segura a página.
+        const [catalog, panel, mine, today, ninho] = await Promise.all([
           getMissions(), getAgent(), getMyMissions(), getDailySuggestion(),
+          getSubmentors().catch(() => [] as Submentor[]),
         ]);
         if (!active) return;
 
@@ -140,6 +145,7 @@ export default function Missions() {
         setProgress(bySlug(mine));
         setSuggestion(today);
         setEntryMission(entry);
+        setSubmentors(ninho);
 
         if (welcome !== null && entry) {
           setSelectedSlug(entry.slug);
@@ -194,6 +200,17 @@ export default function Missions() {
   const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug)
     ?? (selectedSlug !== null && entryMission?.slug === selectedSlug ? entryMission : undefined);
 
+  // O submentor da área da missão; a de entrada não tem.
+  const submentorOf = (mission: Mission) =>
+    submentors.find((submentor) => submentor.area.key === mission.category?.key);
+
+  // A apresentação vista não volta sozinha; se a API falhar, ela volta na próxima visita.
+  const handleMeet = (met: Submentor) => {
+    setSubmentors((current) =>
+      current.map((submentor) => (submentor.area.key === met.area.key ? { ...submentor, met: true } : submentor)));
+    meetSubmentor(met.area.key).catch(() => {});
+  };
+
   const openMission = (slug: string | null) => {
     setNotice(null);
     setSelectedSlug(slug);
@@ -237,7 +254,10 @@ export default function Missions() {
     setNotice(null);
     try {
       saveProgress(await acceptMission(mission.slug));
-      setNotice({ tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
+      // Com briefing, quem recebe o agente é o submentor da área (RF-02).
+      setNotice(mission.briefing && submentorOf(mission)
+        ? { tone: "briefing", text: mission.briefing }
+        : { tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
       setSuggestionStale(true);
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível aceitar a missão. Tente de novo.") });
@@ -321,12 +341,15 @@ export default function Missions() {
                   </BackButton>
                 )}
                 <MissionDetail
+                  key={selectedMission.slug}
                   mission={selectedMission}
                   progress={progress[selectedMission.slug]}
+                  submentor={submentorOf(selectedMission)}
                   busy={busy}
                   notice={notice}
                   onAccept={() => handleAccept(selectedMission)}
                   onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
+                  onMeet={handleMeet}
                 />
               </>
             ) : selectedGroup ? (
