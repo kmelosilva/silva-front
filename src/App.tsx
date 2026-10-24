@@ -5,6 +5,7 @@ import { store } from "./store/index";
 import Enlistment from "./pages/Enlistment/index";
 import Login from "./pages/Login/index";
 import Missions from "./pages/Missions/index";
+import Reflections from "./pages/Reflections/index";
 import Register from "./pages/Register/index";
 import PrivateRoute from "./components/PrivateRoute";
 import { GlobalBrand } from "./theme/GlobalBrand";
@@ -32,6 +33,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Missions />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reflexoes"
+            element={
+              <PrivateRoute>
+                <Reflections />
               </PrivateRoute>
             }
           />

@@ -99,3 +99,22 @@ export const Hint = styled.p`
   color: ${colors.textSecondary};
   margin: 8px 0 0;
 `;
+
+// O caminho para "Minhas reflexões": discreto, no mesmo tom do "mudar".
+export const ReflectionsLink = styled.a`
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${colors.text};
+  text-decoration: underline;
+  text-decoration-color: ${colors.focus};
+  text-underline-offset: 3px;
+
+  &:hover { color: ${colors.text}; }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.focus};
+    outline-offset: 2px;
+  }
+`;

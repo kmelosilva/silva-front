@@ -1,9 +1,10 @@
+import { Link } from "react-router-dom";
 import type { Agent } from "../../../types/agent";
 import { getCategoryVisual } from "../../../config/categoryConfig";
 import XPBar from "../XPBar";
 import {
   Panel, Avatar, AgentName, AgentStatus, Focus, FocusButton,
-  StatNumber, StatLabel, XPLabel, Hint,
+  StatNumber, StatLabel, XPLabel, Hint, ReflectionsLink,
 } from "./styles";
 
 interface AgentPanelProps {
@@ -53,6 +54,7 @@ export default function AgentPanel({ agent, onChangePriorities }: AgentPanelProp
                   </FocusButton>
                 </Focus>
               )}
+              <ReflectionsLink as={Link} to="/reflexoes">Minhas reflexões</ReflectionsLink>
             </div>
           </div>
         </div>

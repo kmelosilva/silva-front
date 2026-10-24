@@ -5,6 +5,7 @@ import {
   acceptMission, apiErrorMessage, completeCoordinate, getAgent, getDailySuggestion, getMyMissions,
 } from "../../services/agentService";
 import { isLater, later } from "../../services/later";
+import { getSubmentors, meetSubmentor } from "../../services/mentoringService";
 import { useAppDispatch } from "../../store/hooks";
 import { logoutThunk } from "../../store/auth/authActions";
 import AgencyInvite from "../../components/Missions/AgencyInvite";
@@ -17,6 +18,7 @@ import PriorityChooser from "../../components/Missions/PriorityChooser";
 import Logo from "../../components/Brand/Logo";
 import { colors } from "../../theme/tokens";
 import type { Category, Coordinate, Mission } from "../../types/mission";
+import type { Reflection, Submentor } from "../../types/mentoring";
 import type {
   Agent, CompletionResult, DailySuggestion as Suggestion, MissionProgress,
 } from "../../types/agent";
@@ -32,7 +34,9 @@ const streakLabel = (current: number) =>
 
 // O aviso depois de cumprir: missão concluída em destaque, depois o XP e o nível.
 // Missão concluída e subida de nível são momentos da agência, assinados pelo mentor.
-function completionNotice({ result, agent }: CompletionResult, mission: Mission): Notice {
+// Na missão de área com submentor, quem fecha a missão é ele (RF-05): o aviso fica com o
+// XP e o nível, e a coruja continua dona da subida de nível.
+function completionNotice({ result, agent }: CompletionResult, mission: Mission, closedBySubmentor: boolean): Notice {
   if (result.already_completed) {
     return { tone: "info", text: "Essa coordenada já estava cumprida." };
   }
@@ -40,7 +44,7 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
   const parts: string[] = [];
   if (result.mission_completed && mission.category === null) {
     parts.push("Missão de entrada concluída! Agora você é um agente da Silva de verdade.");
-  } else if (result.mission_completed) {
+  } else if (result.mission_completed && !closedBySubmentor) {
     parts.push(mission.coordinates_count === 1
       ? "Missão concluída! Você cumpriu a coordenada desta missão."
       : `Missão concluída! Você cumpriu as ${mission.coordinates_count} coordenadas.`);
@@ -50,7 +54,7 @@ function completionNotice({ result, agent }: CompletionResult, mission: Mission)
     parts.push(`Você subiu para o nível ${agent.level}!`);
   }
 
-  const fromAgency = result.mission_completed || result.levels_gained > 0;
+  const fromAgency = (result.mission_completed && !closedBySubmentor) || result.levels_gained > 0;
   return { tone: fromAgency ? "highlight" : "success", text: parts.join(" ") };
 }
 
@@ -102,6 +106,11 @@ export default function Missions() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [entryMission, setEntryMission] = useState<Mission | null>(null);
+  const [submentors, setSubmentors] = useState<Submentor[]>([]);
+  // A coordenada recém-cumprida que oferece a reflexão.
+  const [reflectingOn, setReflectingOn] = useState<string | null>(null);
+  // O fechamento do submentor espera a reflexão da última coordenada (ou o "Agora não").
+  const [closing, setClosing] = useState<"none" | "pending" | "shown">("none");
   const [choosingPriority, setChoosingPriority] = useState(false);
   const [priorityLater, setPriorityLater] = useState(() => isLater("priorities"));
 
@@ -118,8 +127,10 @@ export default function Missions() {
 
     const fetchData = async () => {
       try {
-        const [catalog, panel, mine, today] = await Promise.all([
+        // Sem os submentores, as missões funcionam como antes: a mentoria nunca segura a página.
+        const [catalog, panel, mine, today, ninho] = await Promise.all([
           getMissions(), getAgent(), getMyMissions(), getDailySuggestion(),
+          getSubmentors().catch(() => [] as Submentor[]),
         ]);
         if (!active) return;
 
@@ -140,6 +151,7 @@ export default function Missions() {
         setProgress(bySlug(mine));
         setSuggestion(today);
         setEntryMission(entry);
+        setSubmentors(ninho);
 
         if (welcome !== null && entry) {
           setSelectedSlug(entry.slug);
@@ -194,8 +206,21 @@ export default function Missions() {
   const selectedMission = selectedGroup?.missions.find((mission) => mission.slug === selectedSlug)
     ?? (selectedSlug !== null && entryMission?.slug === selectedSlug ? entryMission : undefined);
 
+  // O submentor da área da missão; a de entrada não tem.
+  const submentorOf = (mission: Mission) =>
+    submentors.find((submentor) => submentor.area.key === mission.category?.key);
+
+  // A apresentação vista não volta sozinha; se a API falhar, ela volta na próxima visita.
+  const handleMeet = (met: Submentor) => {
+    setSubmentors((current) =>
+      current.map((submentor) => (submentor.area.key === met.area.key ? { ...submentor, met: true } : submentor)));
+    meetSubmentor(met.area.key).catch(() => {});
+  };
+
   const openMission = (slug: string | null) => {
     setNotice(null);
+    setReflectingOn(null);
+    setClosing("none");
     setSelectedSlug(slug);
   };
 
@@ -232,12 +257,22 @@ export default function Missions() {
     }
   };
 
+  // "Agora não" fecha a caixa; respondida, a resposta fica na tela até o próximo passo.
+  // Na última coordenada, as duas coisas abrem o fechamento da missão.
+  const handleReflectionFinish = (reflection: Reflection | null) => {
+    if (reflection === null) setReflectingOn(null);
+    setClosing((current) => (current === "pending" ? "shown" : current));
+  };
+
   const handleAccept = async (mission: Mission) => {
     setBusy(true);
     setNotice(null);
     try {
       saveProgress(await acceptMission(mission.slug));
-      setNotice({ tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
+      // Com briefing, quem recebe o agente é o submentor da área (RF-02).
+      setNotice(mission.briefing && submentorOf(mission)
+        ? { tone: "briefing", text: mission.briefing }
+        : { tone: "success", text: "Missão aceita. Comece pela coordenada 1." });
       setSuggestionStale(true);
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível aceitar a missão. Tente de novo.") });
@@ -250,12 +285,20 @@ export default function Missions() {
   const handleComplete = async (mission: Mission, coordinate: Coordinate) => {
     setBusy(true);
     setNotice(null);
+    setReflectingOn(null);
+    setClosing("none");
     try {
       const completion = await completeCoordinate(mission.slug, coordinate.slug);
+      const withSubmentor = submentorOf(mission) !== undefined;
       saveProgress(completion.progress);
       setAgent(completion.agent);
-      setNotice(completionNotice(completion, mission));
+      setNotice(completionNotice(completion, mission, withSubmentor));
       setSuggestionStale(true);
+      // O XP já chegou; escrever é opcional e vem depois (RF-03).
+      if (withSubmentor && !completion.result.already_completed) {
+        setReflectingOn(coordinate.slug);
+        if (completion.result.mission_completed) setClosing("pending");
+      }
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível marcar a coordenada. Tente de novo.") });
       await resync();
@@ -321,12 +364,19 @@ export default function Missions() {
                   </BackButton>
                 )}
                 <MissionDetail
+                  key={selectedMission.slug}
                   mission={selectedMission}
                   progress={progress[selectedMission.slug]}
+                  submentor={submentorOf(selectedMission)}
+                  codename={agent?.codename ?? "agente"}
                   busy={busy}
                   notice={notice}
+                  reflectingOn={reflectingOn}
+                  closing={closing === "shown"}
                   onAccept={() => handleAccept(selectedMission)}
                   onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
+                  onMeet={handleMeet}
+                  onReflectionFinish={handleReflectionFinish}
                 />
               </>
             ) : selectedGroup ? (

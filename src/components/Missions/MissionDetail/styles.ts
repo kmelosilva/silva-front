@@ -136,6 +136,46 @@ export const NoticeSpot = styled.div`
   line-height: 1.5;
 `;
 
+// A fala de um submentor: texto corrido, sem o negrito dos avisos da agência.
+export const MessageSpot = styled.div`
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+
+  p { margin: 0; }
+`;
+
+export const MessageHint = styled.p`
+  && { margin-top: 10px; }
+  font-size: 13px;
+  color: ${colors.textMuted};
+`;
+
+// O retrato do submentor no cabeçalho: abre a apresentação de novo.
+export const PortraitButton = styled.button<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 2px 10px 2px 2px;
+  border-radius: 999px;
+  border: 1px solid ${({ $color }) => $color}55;
+  background: ${colors.base};
+  color: ${colors.textSecondary};
+  font-family: ${fonts.reading};
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+
+  &:hover { border-color: ${({ $color }) => $color}; color: ${colors.text}; }
+
+  &:focus-visible {
+    outline: 2px solid ${colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
 export const List = styled.ol`
   list-style: none;
   padding: 0;

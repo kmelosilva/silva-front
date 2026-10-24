@@ -1,36 +1,80 @@
+import { useEffect, useState } from "react";
 import type { Coordinate, Mission } from "../../../types/mission";
 import type { MissionProgress } from "../../../types/agent";
+import type { Reflection, Submentor } from "../../../types/mentoring";
 import { categoryLabel, getCategoryVisual } from "../../../config/categoryConfig";
+import { submentorPortrait } from "../../../config/submentorConfig";
+import { fillMarkers } from "../../../services/mentoringService";
+import { nextWelcomeBack, rememberWelcomeBack } from "../../../services/welcomeBack";
 import MentorMessage from "../../Brand/MentorMessage";
+import Portrait from "../../Brand/Portrait";
+import SubmentorIntro from "../../Mentoring/SubmentorIntro";
+import ReflectionBox from "../../Mentoring/ReflectionBox";
+import MissionClosing from "../../Mentoring/MissionClosing";
 import {
   Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox, NoticeSpot,
+  MessageSpot, MessageHint, PortraitButton,
   List, Item, Step, ItemBody, ItemTitle, CareNote, ItemText, ItemXP, CompleteButton,
 } from "./styles";
 
 export interface Notice {
-  tone: "success" | "highlight" | "info" | "error";
+  // "briefing" é a fala do submentor ao aceitar; "highlight" é do Agente Silva.
+  tone: "success" | "highlight" | "info" | "error" | "briefing";
   text: string;
 }
 
 interface MissionDetailProps {
   mission: Mission;
   progress?: MissionProgress;
+  // O submentor da área; a missão de entrada não tem (fala o Agente Silva).
+  submentor?: Submentor;
+  // O codinome do agente, para os textos do submentor (antes do alistamento, "agente").
+  codename: string;
   busy: boolean;
   notice: Notice | null;
+  // A coordenada que acabou de ser cumprida: a caixa de reflexão aparece nela.
+  reflectingOn: string | null;
+  // A missão acabou de ser concluída, e a reflexão da última coordenada já passou.
+  closing: boolean;
   onAccept: () => void;
   onComplete: (coordinate: Coordinate) => void;
+  onMeet: (submentor: Submentor) => void;
+  onReflectionFinish: (reflection: Reflection | null) => void;
 }
 
 export default function MissionDetail({
-  mission, progress, busy, notice, onAccept, onComplete,
+  mission, progress, submentor, codename, busy, notice, reflectingOn, closing,
+  onAccept, onComplete, onMeet, onReflectionFinish,
 }: MissionDetailProps) {
   const visual = getCategoryVisual(mission.category?.key);
   const count = mission.coordinates_count;
   const done = progress?.completed_coordinates ?? [];
   const completed = progress?.status === "completed";
+  // A apresentação abre sozinha na primeira visita à área, e de novo pelo retrato.
+  const [introOpen, setIntroOpen] = useState(() => submentor !== undefined && !submentor.met);
+  const portrait = submentor ? submentorPortrait(submentor.area.key) : null;
+  const signer = submentor ? { name: submentor.codename, image: portrait } : undefined;
+
+  // A boas-vindas da volta (RF-06): escolhida uma vez por abertura, a seguinte à última
+  // que apareceu nesta missão. Na primeira visita à área, a apresentação vem no lugar dela.
+  const [welcomeIndex] = useState(() =>
+    submentor && submentor.met && progress?.welcome_back && submentor.welcome_backs.length > 0
+      ? nextWelcomeBack(mission.slug, submentor.welcome_backs.length)
+      : null);
+
+  useEffect(() => {
+    if (welcomeIndex !== null) rememberWelcomeBack(mission.slug, welcomeIndex);
+  }, [mission.slug, welcomeIndex]);
+
+  const closeIntro = () => {
+    setIntroOpen(false);
+    if (submentor && !submentor.met) onMeet(submentor);
+  };
 
   return (
     <section>
+      {submentor && introOpen && <SubmentorIntro submentor={submentor} onClose={closeIntro} />}
+
       <Header $color={visual.color}>
         <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
           <CategoryTag $color={visual.color} $bg={visual.bg}>
@@ -40,6 +84,17 @@ export default function MissionDetail({
             <StatusTag $done={completed}>
               {completed ? "MISSÃO CONCLUÍDA ✓" : `EM ANDAMENTO · ${done.length}/${count}`}
             </StatusTag>
+          )}
+          {submentor && !introOpen && (
+            <PortraitButton
+              type="button"
+              $color={visual.color}
+              onClick={() => setIntroOpen(true)}
+              aria-label={`Rever a apresentação de ${submentor.codename}`}
+            >
+              {portrait ? <Portrait src={portrait} size={32} accent={visual.color} /> : visual.emoji}
+              {submentor.codename}
+            </PortraitButton>
           )}
         </div>
         <Title>{mission.title}</Title>
@@ -53,13 +108,32 @@ export default function MissionDetail({
         )}
       </Header>
 
+      {/* Some quando o agente cumpre a próxima coordenada: a missão deixou de estar parada. */}
+      {submentor && welcomeIndex !== null && progress?.welcome_back && (
+        <MessageSpot>
+          <MentorMessage signer={signer} label={submentor.area.label} accent={visual.color}>
+            <p>{fillMarkers(submentor.welcome_backs[welcomeIndex], { codinome: codename, missao: mission.title })}</p>
+          </MentorMessage>
+        </MessageSpot>
+      )}
+
+      {/* O briefing é do submentor da área, logo depois de aceitar (RF-02). */}
+      {notice?.tone === "briefing" && submentor && (
+        <MessageSpot>
+          <MentorMessage signer={signer} label={submentor.area.label} accent={visual.color} live>
+            <p>{notice.text}</p>
+            <MessageHint>Missão aceita. Comece pela coordenada 1.</MessageHint>
+          </MentorMessage>
+        </MessageSpot>
+      )}
+
       {/* Missão concluída e subida de nível são da agência: quem fala é o Agente Silva. */}
       {notice?.tone === "highlight" && (
         <NoticeSpot>
           <MentorMessage tone="highlight" live>{notice.text}</MentorMessage>
         </NoticeSpot>
       )}
-      {notice && notice.tone !== "highlight" && (
+      {notice && notice.tone !== "highlight" && notice.tone !== "briefing" && (
         <NoticeBox $tone={notice.tone} role="status" aria-live="polite">
           {notice.text}
         </NoticeBox>
@@ -89,6 +163,15 @@ export default function MissionDetail({
                   </CareNote>
                 )}
                 <ItemText>{coordinate.content}</ItemText>
+                {submentor && reflectingOn === coordinate.slug && (
+                  <ReflectionBox
+                    submentor={submentor}
+                    missionSlug={mission.slug}
+                    coordinate={coordinate}
+                    accent={visual.color}
+                    onFinish={onReflectionFinish}
+                  />
+                )}
                 {isNext && (
                   <CompleteButton
                     type="button"
@@ -105,6 +188,10 @@ export default function MissionDetail({
           );
         })}
       </List>
+
+      {submentor && closing && (
+        <MissionClosing submentor={submentor} mission={mission} codename={codename} accent={visual.color} />
+      )}
     </section>
   );
 }
