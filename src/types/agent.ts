@@ -26,6 +26,8 @@ export interface MissionProgress {
   next_coordinate: string | null;
   accepted_at: string;
   completed_at: string | null;
+  // Em andamento e parada há 7 dias ou mais: o submentor recebe o agente de volta.
+  welcome_back: boolean;
 }
 
 export interface CompletionResult {
