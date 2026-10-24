@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { Coordinate, Mission } from "../../../types/mission";
 import type { MissionProgress } from "../../../types/agent";
-import type { Submentor } from "../../../types/mentoring";
+import type { Reflection, Submentor } from "../../../types/mentoring";
 import { categoryLabel, getCategoryVisual } from "../../../config/categoryConfig";
 import { submentorPortrait } from "../../../config/submentorConfig";
 import MentorMessage from "../../Brand/MentorMessage";
 import Portrait from "../../Brand/Portrait";
 import SubmentorIntro from "../../Mentoring/SubmentorIntro";
+import ReflectionBox from "../../Mentoring/ReflectionBox";
 import {
   Header, CategoryTag, StatusTag, Title, Description, Meta, AcceptButton, NoticeBox, NoticeSpot,
   MessageSpot, MessageHint, PortraitButton,
@@ -26,13 +27,17 @@ interface MissionDetailProps {
   submentor?: Submentor;
   busy: boolean;
   notice: Notice | null;
+  // A coordenada que acabou de ser cumprida: a caixa de reflexão aparece nela.
+  reflectingOn: string | null;
   onAccept: () => void;
   onComplete: (coordinate: Coordinate) => void;
   onMeet: (submentor: Submentor) => void;
+  onReflectionFinish: (reflection: Reflection | null) => void;
 }
 
 export default function MissionDetail({
-  mission, progress, submentor, busy, notice, onAccept, onComplete, onMeet,
+  mission, progress, submentor, busy, notice, reflectingOn,
+  onAccept, onComplete, onMeet, onReflectionFinish,
 }: MissionDetailProps) {
   const visual = getCategoryVisual(mission.category?.key);
   const count = mission.coordinates_count;
@@ -131,6 +136,15 @@ export default function MissionDetail({
                   </CareNote>
                 )}
                 <ItemText>{coordinate.content}</ItemText>
+                {submentor && reflectingOn === coordinate.slug && (
+                  <ReflectionBox
+                    submentor={submentor}
+                    missionSlug={mission.slug}
+                    coordinate={coordinate}
+                    accent={visual.color}
+                    onFinish={onReflectionFinish}
+                  />
+                )}
                 {isNext && (
                   <CompleteButton
                     type="button"

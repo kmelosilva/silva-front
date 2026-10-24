@@ -18,7 +18,7 @@ import PriorityChooser from "../../components/Missions/PriorityChooser";
 import Logo from "../../components/Brand/Logo";
 import { colors } from "../../theme/tokens";
 import type { Category, Coordinate, Mission } from "../../types/mission";
-import type { Submentor } from "../../types/mentoring";
+import type { Reflection, Submentor } from "../../types/mentoring";
 import type {
   Agent, CompletionResult, DailySuggestion as Suggestion, MissionProgress,
 } from "../../types/agent";
@@ -105,6 +105,8 @@ export default function Missions() {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [entryMission, setEntryMission] = useState<Mission | null>(null);
   const [submentors, setSubmentors] = useState<Submentor[]>([]);
+  // A coordenada recém-cumprida que oferece a reflexão.
+  const [reflectingOn, setReflectingOn] = useState<string | null>(null);
   const [choosingPriority, setChoosingPriority] = useState(false);
   const [priorityLater, setPriorityLater] = useState(() => isLater("priorities"));
 
@@ -213,6 +215,7 @@ export default function Missions() {
 
   const openMission = (slug: string | null) => {
     setNotice(null);
+    setReflectingOn(null);
     setSelectedSlug(slug);
   };
 
@@ -249,6 +252,11 @@ export default function Missions() {
     }
   };
 
+  // "Agora não" fecha a caixa; respondida, a resposta fica na tela até o próximo passo.
+  const handleReflectionFinish = (reflection: Reflection | null) => {
+    if (reflection === null) setReflectingOn(null);
+  };
+
   const handleAccept = async (mission: Mission) => {
     setBusy(true);
     setNotice(null);
@@ -270,12 +278,17 @@ export default function Missions() {
   const handleComplete = async (mission: Mission, coordinate: Coordinate) => {
     setBusy(true);
     setNotice(null);
+    setReflectingOn(null);
     try {
       const completion = await completeCoordinate(mission.slug, coordinate.slug);
       saveProgress(completion.progress);
       setAgent(completion.agent);
       setNotice(completionNotice(completion, mission));
       setSuggestionStale(true);
+      // O XP já chegou; escrever é opcional e vem depois (RF-03).
+      if (submentorOf(mission) && !completion.result.already_completed) {
+        setReflectingOn(coordinate.slug);
+      }
     } catch (err) {
       setNotice({ tone: "error", text: apiErrorMessage(err, "Não foi possível marcar a coordenada. Tente de novo.") });
       await resync();
@@ -347,9 +360,11 @@ export default function Missions() {
                   submentor={submentorOf(selectedMission)}
                   busy={busy}
                   notice={notice}
+                  reflectingOn={reflectingOn}
                   onAccept={() => handleAccept(selectedMission)}
                   onComplete={(coordinate) => handleComplete(selectedMission, coordinate)}
                   onMeet={handleMeet}
+                  onReflectionFinish={handleReflectionFinish}
                 />
               </>
             ) : selectedGroup ? (
